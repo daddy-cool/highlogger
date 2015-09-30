@@ -1,0 +1,15 @@
+# IntelliJ project files
+.idea
+out
+gen
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Dependency directory
+node_modules

@@ -1,47 +1,149 @@
 "use strict";
 
-class GreenGate {
+let Syslog = require('./lib/transporter/syslog'),
+    Console = require('./lib/transporter/console'),
+    async = require('async'),
+    sharedConstants = require('./lib/shared-constants'),
+    FACILITY = sharedConstants.FACILITY,
+    SEVERITY = sharedConstants.SEVERITY,
+    TRANSPORTER = sharedConstants.TRANSPORTER;
 
-  constructor (options) {
+/**
+ * @class Highlogger
+ */
+class Highlogger {
 
+  /**
+   * @param config
+   */
+  constructor (config) {
+    config = this.populateConfig(config);
+
+    this.transporters = [];
+    for (let t in config.transporters) {
+      this.addTransporter(config.transporters[t]);
+    }
   }
 
+  populateConfig (config) {
+    if (typeof config !== 'object') {
+      config = {};
+    }
+
+    let defaultConfig = {
+      transporters: [
+          {
+            type: TRANSPORTER.CONSOLE
+          }
+      ]
+    };
+
+    for (let c in defaultConfig) {
+      if (typeof config[c] === 'undefined') {
+        config[c] = defaultConfig[c];
+      }
+    }
+
+    return config;
+  }
+
+  addTransporter (transporterConfig) {
+    if (typeof transporterConfig.type !== 'number') {
+      throw new Error('unsupported transporter');
+    }
+
+    switch (transporterConfig.type) {
+      case TRANSPORTER.CONSOLE:
+        this.transporters.push(new Console(transporterConfig));
+        break;
+      case TRANSPORTER.SYSLOG:
+        this.transporters.push(new Syslog(transporterConfig));
+        break;
+      default:
+        throw new Error('unsupported transporter');
+    }
+  }
+
+  log (options) {
+    async.each(this.transporters, function (transporter, callback) {
+      transporter.log(options, callback);
+    }, function (err) {
+      if (err) {
+        throw err;
+      }
+    });
+  }
+
+  emerg (message) {
+    this.log({
+      severity: SEVERITY.EMERGENCY,
+      message: message
+    });
+  }
+
+  alert (message) {
+    this.log({
+      severity: SEVERITY.ALERT,
+      message: message
+    });
+  }
+
+  crit (message) {
+    this.log({
+      severity: SEVERITY.CRITICAL,
+      message: message
+    });
+  }
+
+  err (message) {
+    this.log({
+      severity: SEVERITY.ERROR,
+      message: message
+    });
+  }
+
+  warn (message) {
+    this.log({
+      severity: SEVERITY.WARNING,
+      message: message
+    });
+  }
+
+  notice (message) {
+    this.log({
+      severity: SEVERITY.NOTICE,
+      message: message
+    });
+  }
+
+  info (message) {
+    this.log({
+      severity: SEVERITY.INFORMATION,
+      message: message
+    });
+  }
+
+  debug (message) {
+    this.log({
+      severity: SEVERITY.DEBUG,
+      message: message
+    });
+  }
 }
 
-GreenGate.FACILITY = {
-  KERN: 0, // kernel
-  USER: 1, // user-level
-  MAIL: 2, // mail system
-  DAEMON: 3, // system daemons
-  AUTH: 4, // security/authorization
-  SYSLOG: 5, // generated internally by syslogd
-  LPR: 6, // line printer subsystem
-  NEWS: 7, // network news subsystem
-  UUCP: 8, // UUCP subsystem
-  CLOCK: 9, // clock daemon
-  SEC: 10, // security/authorization
-  FTP: 11, // FTP daemon
-  NTP: 12, // NTP subsystem
-  AUDIT: 13, // log audit
-  ALERT: 14, // log alert
-  CLOCK2: 15, // clock daemon
-  LOCAL0: 16, // local use 0
-  LOCAL1: 17, // local use 1
-  LOCAL2: 18, // local use 2
-  LOCAL3: 19, // local use 3
-  LOCAL4: 20, // local use 4
-  LOCAL5: 21, // local use 5
-  LOCAL6: 22, // local use 6
-  LOCAL7: 23 // local use 7
-};
+/**
+ * @type {module.exports.FACILITY}
+ */
+Highlogger.FACILITY = FACILITY;
 
-GreenGate.SEVERITY = {
-  EMERGENCY: 0, // system is unusable
-  ALERT: 1, // action must be taken immediately
-  CRITICAL: 2, // critical conditions
-  ERROR: 3, // error conditions
-  WARNING: 4, // warning conditions
-  NOTICE: 5, // normal but significant condition
-  INFORMATION: 6, // informational messages
-  DEBUG: 7 // debug-level messages
-};
+/**
+ * @type {module.exports.SEVERITY}
+ */
+Highlogger.SEVERITY = SEVERITY;
+
+/**
+ * @type {module.exports.TRANSPORTER}
+ */
+Highlogger.TRANSPORTER = TRANSPORTER;
+
+module.exports = Highlogger;

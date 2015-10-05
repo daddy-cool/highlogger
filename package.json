@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "todo",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",
@@ -23,6 +23,9 @@
     "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- -R spec"
   },
   "dependencies": {
+    "async": "^1.4.2",
+    "moment": "^2.10.6",
+    "unix-dgram": "^0.2.2"
   },
   "devDependencies": {
     "assert": "^1.3.0",

@@ -1,2 +1,3 @@
-#HighLogger
+Highlogger
+=========
 There can be only one!

@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "todo",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",
@@ -34,5 +34,5 @@
     "log",
     "RFC5424"
   ],
-  "repository": "github:daddy-cool/greengate"
+  "repository": "github:daddy-cool/highlogger"
 }

@@ -21,6 +21,10 @@ class Highlogger {
   constructor (config) {
     config = this.populateConfig(config);
 
+    if (config.json) {
+      this.json = true;
+    }
+
     this.transporters = [];
     for (let t in config.transporters) {
       this.addTransporter(config.transporters[t]);
@@ -33,6 +37,7 @@ class Highlogger {
     }
 
     let defaultConfig = {
+      json: false,
       transporters: [
           {
             type: TRANSPORTER.CONSOLE
@@ -76,6 +81,22 @@ class Highlogger {
 
     if (typeof options.severity !== 'number') {
       options.severity = SEVERITY.NOTICE;
+    }
+
+    let messageType = typeof message;
+    try {
+      if (this.json) {
+        if (messageType !== 'object') {
+          message = {message: message};
+        }
+        message = JSON.parse(message);
+      } else if (messageType === 'object') {
+        message = JSON.stringify(message);
+      } else if (messageType !== 'string') {
+        message = String(message);
+      }
+    } catch (err) {
+      return nodeConsole.error(err);
     }
 
     async.each(this.transporters, function (transporter, callback) {

@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
-  "description": "todo",
-  "version": "0.0.4",
+  "description": "there can log only one",
+  "version": "0.0.5",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",

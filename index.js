@@ -2,6 +2,8 @@
 
 let Syslog = require('./lib/transporter/syslog'),
     Console = require('./lib/transporter/console'),
+    nodeConsole = require('console'),
+    Socket = require('./lib/transporter/Socket'),
     async = require('async'),
     sharedConstants = require('./lib/shared-constants'),
     FACILITY = sharedConstants.FACILITY,
@@ -56,6 +58,9 @@ class Highlogger {
       case TRANSPORTER.CONSOLE:
         this.transporters.push(new Console(transporterConfig));
         break;
+      case TRANSPORTER.SOCKET:
+        this.transporters.push(new Socket(transporterConfig));
+        break;
       case TRANSPORTER.SYSLOG:
         this.transporters.push(new Syslog(transporterConfig));
         break;
@@ -64,69 +69,73 @@ class Highlogger {
     }
   }
 
-  log (options) {
+  log (message, options) {
+    if (typeof options !== 'object') {
+      options = {};
+    }
+
+    if (typeof options.severity !== 'number') {
+      options.severity = SEVERITY.NOTICE;
+    }
+
     async.each(this.transporters, function (transporter, callback) {
-      transporter.log(options, callback);
+      if (options.severity < transporter.severityLevel) {
+        return callback();
+      }
+
+      transporter.log(message, options, callback);
     }, function (err) {
       if (err) {
-        throw err;
+        nodeConsole.error(err);
       }
     });
   }
 
   emerg (message) {
-    this.log({
-      severity: SEVERITY.EMERGENCY,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.EMERGENCY
     });
   }
 
   alert (message) {
-    this.log({
-      severity: SEVERITY.ALERT,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.ALERT
     });
   }
 
   crit (message) {
-    this.log({
-      severity: SEVERITY.CRITICAL,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.CRITICAL
     });
   }
 
   err (message) {
-    this.log({
-      severity: SEVERITY.ERROR,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.ERROR
     });
   }
 
   warn (message) {
-    this.log({
-      severity: SEVERITY.WARNING,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.WARNING
     });
   }
 
   notice (message) {
-    this.log({
-      severity: SEVERITY.NOTICE,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.NOTICE
     });
   }
 
   info (message) {
-    this.log({
-      severity: SEVERITY.INFORMATION,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.INFORMATION
     });
   }
 
   debug (message) {
-    this.log({
-      severity: SEVERITY.DEBUG,
-      message: message
+    this.log(message, {
+      severity: SEVERITY.DEBUG
     });
   }
 }

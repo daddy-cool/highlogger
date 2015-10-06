@@ -1,3 +1,3 @@
 highlogger
 =========
-There can be only one!
+there can log only one

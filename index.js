@@ -2,8 +2,9 @@
 
 let nodeConsole = require('console'),
     async = require('async'),
-    Syslog = require('./lib/transporter/syslog'),
+    Console = require('./lib/transporter/console'),
     Socket = require('./lib/transporter/socket'),
+    Syslog = require('./lib/transporter/syslog'),
     stringify = require('./lib/stringify'),
     sharedConstants = require('./lib/shared-constants'),
     FACILITY = sharedConstants.FACILITY,

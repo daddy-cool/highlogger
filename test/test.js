@@ -15,7 +15,7 @@ socket.on("error", function (err) {
 socket.on("message", function (msg, rinfo) {
   count++;
   console.log("udp message: " + msg.toString());
-  if (count === 8) {
+  if (count === 1) {
     socket.close(doneCallback);
   }
 });
@@ -23,6 +23,7 @@ socket.on("message", function (msg, rinfo) {
 socket.bind(22514);
 
 let hl = new Highlogger({
+  json: true,
   transporters: [
       {
         type: Highlogger.TRANSPORTER.SYSLOG,
@@ -36,14 +37,7 @@ describe('module-logger-nodejs', function () {
 
   it('should listen', function (done) {
     doneCallback = done;
-    hl.emerg('emerg');
-    hl.alert('alert');
-    hl.crit('crit');
-    hl.err('err');
-    hl.warn('warn');
-    hl.notice('notice');
-    hl.info('info');
-    hl.debug('debug');
+    hl.debug("f");
   });
 
 });

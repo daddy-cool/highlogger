@@ -1,52 +1,63 @@
-"use strict";
+'use strict';
 
-let Syslog = require('./lib/transporter/syslog'),
-    Console = require('./lib/transporter/console'),
-    nodeConsole = require('console'),
-    Socket = require('./lib/transporter/Socket'),
+let nodeConsole = require('console'),
     async = require('async'),
+    Syslog = require('./lib/transporter/syslog'),
+    Socket = require('./lib/transporter/socket'),
+    stringify = require('./lib/stringify'),
     sharedConstants = require('./lib/shared-constants'),
     FACILITY = sharedConstants.FACILITY,
     SEVERITY = sharedConstants.SEVERITY,
     TRANSPORTER = sharedConstants.TRANSPORTER;
 
 /**
- * @class Highlogger
+ * @param {Error} [err]
  */
+function defaultErrorHandler (err) {
+  if (err) {
+    nodeConsole.error(err);
+  }
+}
+
 class Highlogger {
 
   /**
-   * @param config
+   * @param {Object} [config]
    */
   constructor (config) {
-    config = this.populateConfig(config);
+    this._populateConfig(config);
 
-    if (config.json) {
-      this.json = true;
-    }
+    this.errorHandler = config.onErrorFunction;
 
     this.transporters = [];
     for (let t in config.transporters) {
-      this.addTransporter(config.transporters[t]);
+      if (config.transporters.hasOwnProperty(t)) {
+        let transporterConfig = config.transporters[t];
+        if (typeof transporterConfig === 'object') {
+          transporterConfig.errorHandler = this.errorHandler;
+          this.addTransporter(transporterConfig);
+        }
+      }
     }
   }
 
-  populateConfig (config) {
+  /**
+   * @param {Object} [config]
+   * @returns {Object}
+   * @private
+   */
+  _populateConfig (config) {
+    let defaultConfig = {
+      transporters: [{type: TRANSPORTER.CONSOLE}],
+      onErrorFunction: defaultErrorHandler
+    };
+
     if (typeof config !== 'object') {
       config = {};
     }
 
-    let defaultConfig = {
-      json: false,
-      transporters: [
-          {
-            type: TRANSPORTER.CONSOLE
-          }
-      ]
-    };
-
     for (let c in defaultConfig) {
-      if (typeof config[c] === 'undefined') {
+      if (!config.hasOwnProperty(c) && defaultConfig.hasOwnProperty(c)) {
         config[c] = defaultConfig[c];
       }
     }
@@ -54,11 +65,10 @@ class Highlogger {
     return config;
   }
 
+  /**
+   * @param {Object} transporterConfig
+   */
   addTransporter (transporterConfig) {
-    if (typeof transporterConfig.type !== 'number') {
-      throw new Error('unsupported transporter');
-    }
-
     switch (transporterConfig.type) {
       case TRANSPORTER.CONSOLE:
         this.transporters.push(new Console(transporterConfig));
@@ -70,94 +80,101 @@ class Highlogger {
         this.transporters.push(new Syslog(transporterConfig));
         break;
       default:
-        throw new Error('unsupported transporter');
+        transporterConfig.errorHandler(new Error('unsupported transporter'));
     }
   }
 
-  log (message, options) {
+  /**
+   * @param {string} message
+   * @param {Object} [options]
+   * @param {number} [severity]
+   */
+  log (message, options, severity) {
+    message = stringify(message);
+
     if (typeof options !== 'object') {
       options = {};
     }
 
-    if (typeof options.severity !== 'number') {
+    if (typeof severity === 'number') {
+      options.severity = severity;
+    } else if (typeof options.severity !== 'number') {
       options.severity = SEVERITY.NOTICE;
     }
 
-    let messageType = typeof message;
-    try {
-      if (this.json) {
-        if (messageType !== 'object') {
-          message = {message: message};
-        }
-        message = JSON.parse(message);
-      } else if (messageType === 'object') {
-        message = JSON.stringify(message);
-      } else if (messageType !== 'string') {
-        message = String(message);
-      }
-    } catch (err) {
-      return nodeConsole.error(err);
-    }
-
-    async.each(this.transporters, function (transporter, callback) {
+    function writeToTransporter (transporter, callback) {
       if (options.severity < transporter.severityLevel) {
         return callback();
       }
 
-      transporter.log(message, options, callback);
-    }, function (err) {
-      if (err) {
-        nodeConsole.error(err);
-      }
-    });
+      transporter.write(message, options, callback);
+    }
+
+    async.each(this.transporters, writeToTransporter, this.errorHandler);
   }
 
-  emerg (message) {
-    this.log(message, {
-      severity: SEVERITY.EMERGENCY
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  emergency (message, options) {
+    this.log(message, options, SEVERITY.EMERGENCY);
   }
 
-  alert (message) {
-    this.log(message, {
-      severity: SEVERITY.ALERT
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  alert (message, options) {
+    this.log(message, options, SEVERITY.ALERT);
   }
 
-  crit (message) {
-    this.log(message, {
-      severity: SEVERITY.CRITICAL
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  critical (message, options) {
+    this.log(message, options, SEVERITY.CRITICAL);
   }
 
-  err (message) {
-    this.log(message, {
-      severity: SEVERITY.ERROR
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  error (message, options) {
+    this.log(message, options, SEVERITY.ERROR);
   }
 
-  warn (message) {
-    this.log(message, {
-      severity: SEVERITY.WARNING
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  warning (message, options) {
+    this.log(message, options, SEVERITY.WARNING);
   }
 
-  notice (message) {
-    this.log(message, {
-      severity: SEVERITY.NOTICE
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  notice (message, options) {
+    this.log(message, options, SEVERITY.NOTICE);
   }
 
-  info (message) {
-    this.log(message, {
-      severity: SEVERITY.INFORMATION
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  info (message, options) {
+    this.log(message, options, SEVERITY.INFO);
   }
 
-  debug (message) {
-    this.log(message, {
-      severity: SEVERITY.DEBUG
-    });
+  /**
+   * @param message
+   * @param {Object} [options]
+   */
+  debug (message, options) {
+    this.log(message, options, SEVERITY.DEBUG);
   }
 }
 

@@ -5,29 +5,82 @@ let nodeConsole = require('console'),
     Console = require('./lib/transporter/console'),
     Socket = require('./lib/transporter/socket'),
     Syslog = require('./lib/transporter/syslog'),
-    stringify = require('./lib/stringify'),
-    sharedConstants = require('./lib/shared-constants'),
-    FACILITY = sharedConstants.FACILITY,
-    SEVERITY = sharedConstants.SEVERITY,
-    TRANSPORTER = sharedConstants.TRANSPORTER;
+    stringify = require('./lib/stringify');
+
+const SHARED_CONSTANTS = require('./lib/shared-constants');
+const FACILITY = SHARED_CONSTANTS.FACILITY;
+const SEVERITY = SHARED_CONSTANTS.SEVERITY;
+const TRANSPORTER = SHARED_CONSTANTS.TRANSPORTER;
+const CONFIG_DEFAULT = {
+  transporters: [{
+    type: TRANSPORTER.CONSOLE,
+    severity: {
+      minimum: SEVERITY.EMERGENCY,
+      maximum: SEVERITY.DEBUG
+    }
+  }],
+  onErrorFunction: function defaultErrorHandler (err) {
+    if (err) {
+      nodeConsole.error(err);
+    }
+  }
+};
 
 /**
- * @param {Error} [err]
+ * @param {string} message
+ * @param {Object} [options]
+ * @param {number} [severity]
+ * @param {HighLogger} instance
+ * @private
  */
-function defaultErrorHandler (err) {
-  if (err) {
-    nodeConsole.error(err);
+function log (message, options, severity, instance) {
+  message = stringify(message);
+
+  if (typeof options !== 'object') {
+    options = {};
   }
+  options.severity = severity;
+
+  function writeToTransporter (transporter, callback) {
+    if (options.severity < transporter.severity.minimum || options.severity > transporter.severity.maximum) {
+      return callback();
+    }
+
+    transporter.write(message, options, callback);
+  }
+
+  async.each(instance.transporters, writeToTransporter, instance.errorHandler);
 }
 
-class Highlogger {
+/**
+ * @param {Object} [config]
+ * @returns {Object}
+ * @private
+ */
+function populateConfig (config) {
+  if (typeof config !== 'object') {
+    config = {};
+  }
+
+  for (let c in CONFIG_DEFAULT) {
+    if (!config.hasOwnProperty(c) && CONFIG_DEFAULT.hasOwnProperty(c)) {
+      config[c] = CONFIG_DEFAULT[c];
+    }
+  }
+
+  return config;
+}
+
+/**
+ * @class HighLogger
+ */
+class HighLogger {
 
   /**
    * @param {Object} [config]
    */
   constructor (config) {
-    this._populateConfig(config);
-
+    config = populateConfig(config);
     this.errorHandler = config.onErrorFunction;
 
     this.transporters = [];
@@ -40,30 +93,6 @@ class Highlogger {
         }
       }
     }
-  }
-
-  /**
-   * @param {Object} [config]
-   * @returns {Object}
-   * @private
-   */
-  _populateConfig (config) {
-    let defaultConfig = {
-      transporters: [{type: TRANSPORTER.CONSOLE}],
-      onErrorFunction: defaultErrorHandler
-    };
-
-    if (typeof config !== 'object') {
-      config = {};
-    }
-
-    for (let c in defaultConfig) {
-      if (!config.hasOwnProperty(c) && defaultConfig.hasOwnProperty(c)) {
-        config[c] = defaultConfig[c];
-      }
-    }
-
-    return config;
   }
 
   /**
@@ -86,40 +115,11 @@ class Highlogger {
   }
 
   /**
-   * @param {string} message
-   * @param {Object} [options]
-   * @param {number} [severity]
-   */
-  log (message, options, severity) {
-    message = stringify(message);
-
-    if (typeof options !== 'object') {
-      options = {};
-    }
-
-    if (typeof severity === 'number') {
-      options.severity = severity;
-    } else if (typeof options.severity !== 'number') {
-      options.severity = SEVERITY.NOTICE;
-    }
-
-    function writeToTransporter (transporter, callback) {
-      if (options.severity < transporter.severityLevel) {
-        return callback();
-      }
-
-      transporter.write(message, options, callback);
-    }
-
-    async.each(this.transporters, writeToTransporter, this.errorHandler);
-  }
-
-  /**
    * @param message
    * @param {Object} [options]
    */
   emergency (message, options) {
-    this.log(message, options, SEVERITY.EMERGENCY);
+    log(message, options, SEVERITY.EMERGENCY, this);
   }
 
   /**
@@ -127,7 +127,7 @@ class Highlogger {
    * @param {Object} [options]
    */
   alert (message, options) {
-    this.log(message, options, SEVERITY.ALERT);
+    log(message, options, SEVERITY.ALERT, this);
   }
 
   /**
@@ -135,7 +135,7 @@ class Highlogger {
    * @param {Object} [options]
    */
   critical (message, options) {
-    this.log(message, options, SEVERITY.CRITICAL);
+    log(message, options, SEVERITY.CRITICAL, this);
   }
 
   /**
@@ -143,7 +143,7 @@ class Highlogger {
    * @param {Object} [options]
    */
   error (message, options) {
-    this.log(message, options, SEVERITY.ERROR);
+    log(message, options, SEVERITY.ERROR, this);
   }
 
   /**
@@ -151,7 +151,7 @@ class Highlogger {
    * @param {Object} [options]
    */
   warning (message, options) {
-    this.log(message, options, SEVERITY.WARNING);
+    log(message, options, SEVERITY.WARNING, this);
   }
 
   /**
@@ -159,39 +159,53 @@ class Highlogger {
    * @param {Object} [options]
    */
   notice (message, options) {
-    this.log(message, options, SEVERITY.NOTICE);
+    log(message, options, SEVERITY.NOTICE, this);
   }
 
   /**
+   *
    * @param message
    * @param {Object} [options]
    */
   info (message, options) {
-    this.log(message, options, SEVERITY.INFO);
+    log(message, options, SEVERITY.INFO, this);
   }
 
   /**
-   * @param message
-   * @param {Object} [options]
+   *
+   * @param {string} prefix
+   * @returns {function}
    */
-  debug (message, options) {
-    this.log(message, options, SEVERITY.DEBUG);
+  getDebug (prefix) {
+    let self = this;
+
+    /**
+     * @param message
+     * @param {Object} [options]
+     */
+    return function highHighLoggerDebug (message, options) {
+      if (typeof options !== 'object') {
+        options = {};
+      }
+      options.prefix = prefix;
+      log(message, options, SEVERITY.DEBUG, self);
+    };
   }
 }
 
 /**
  * @type {module.exports.FACILITY}
  */
-Highlogger.FACILITY = FACILITY;
+HighLogger.FACILITY = FACILITY;
 
 /**
  * @type {module.exports.SEVERITY}
  */
-Highlogger.SEVERITY = SEVERITY;
+HighLogger.SEVERITY = SEVERITY;
 
 /**
  * @type {module.exports.TRANSPORTER}
  */
-Highlogger.TRANSPORTER = TRANSPORTER;
+HighLogger.TRANSPORTER = TRANSPORTER;
 
-module.exports = Highlogger;
+module.exports = HighLogger;

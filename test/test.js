@@ -1,6 +1,6 @@
 "use strict";
 
-let Highlogger = require('../index'),
+let HighLogger = require('../index'),
     assert = require('assert'),
     dgram = require('dgram'),
     socket = dgram.createSocket('udp4'),
@@ -22,13 +22,17 @@ socket.on("message", function (msg, rinfo) {
 
 socket.bind(22514);
 
-let hl = new Highlogger({
+let hl = new HighLogger({
   json: true,
   transporters: [
       {
-        type: Highlogger.TRANSPORTER.SYSLOG,
-        severityLevel: Highlogger.SEVERITY.EMERGENCY,
-        port: 22514
+        type: HighLogger.TRANSPORTER.SYSLOG,
+        address: '10.30.2.188',
+        severity: {
+          minimum: HighLogger.SEVERITY.EMERGENCY,
+          maximum: HighLogger.SEVERITY.DEBUG
+        },
+        appName: 'highLogger'
       }
   ]
 });
@@ -37,7 +41,7 @@ describe('module-logger-nodejs', function () {
 
   it('should listen', function (done) {
     doneCallback = done;
-    hl.debug("f");
+    hl.warning('{"a":"b"}');
   });
 
 });

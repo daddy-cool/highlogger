@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "there can log only one",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",
@@ -17,7 +17,7 @@
       "email": "metin.kul@shopgate.com"
     }
   ],
-  "main": "index.js",
+  "main": "./index.js",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- -R spec"

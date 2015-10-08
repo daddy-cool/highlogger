@@ -32,7 +32,8 @@ let hl = new HighLogger({
           minimum: HighLogger.SEVERITY.EMERGENCY,
           maximum: HighLogger.SEVERITY.DEBUG
         },
-        appName: 'highLogger'
+        appName: 'highLogger',
+        json: true
       }
   ]
 });
@@ -41,7 +42,7 @@ describe('module-logger-nodejs', function () {
 
   it('should listen', function (done) {
     doneCallback = done;
-    hl.warning('{"a":"b"}');
+    hl.warning('STRING!');
   });
 
 });

@@ -34,7 +34,8 @@ const CONFIG_DEFAULT = {
  * @private
  */
 function log (message, options, severity, instance) {
-  message = stringify(message);
+  let isMessageObject = (typeof message === 'object'),
+      msg = stringify(message);
 
   if (typeof options !== 'object') {
     options = {};
@@ -46,7 +47,11 @@ function log (message, options, severity, instance) {
       return callback();
     }
 
-    transporter.write(message, options, callback);
+    msg = (transporter.json && !isMessageObject)
+        ? '{"message":"' + msg + '"}'
+        : msg;
+
+    transporter.write(msg, options, callback);
   }
 
   async.each(instance.transporters, writeToTransporter, instance.errorHandler);

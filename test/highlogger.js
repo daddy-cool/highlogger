@@ -1,6 +1,6 @@
 'use strict';
 
-let HighLogger = require('../index'),
+let HighLogger = require('../highlogger'),
     AbstractTransporter = require('../lib/transporter/abstract'),
     ConsoleTransporter = require('../lib/transporter/console'),
     SocketTransporter = require('../lib/transporter/socket'),

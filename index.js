@@ -11,6 +11,7 @@ const SHARED_CONSTANTS = require('./lib/shared-constants');
 const FACILITY = SHARED_CONSTANTS.FACILITY;
 const SEVERITY = SHARED_CONSTANTS.SEVERITY;
 const TRANSPORTER = SHARED_CONSTANTS.TRANSPORTER;
+const OBJECT_TYPE = SHARED_CONSTANTS.OBJECT_TYPE;
 const CONFIG_DEFAULT = {
   transporters: [{
     type: TRANSPORTER.CONSOLE,
@@ -25,6 +26,8 @@ const CONFIG_DEFAULT = {
     }
   }
 };
+const MSG_START = '{"message":"';
+const MSG_END = '"}';
 
 /**
  * @param {string} message
@@ -34,10 +37,10 @@ const CONFIG_DEFAULT = {
  * @private
  */
 function log (message, options, severity, instance) {
-  let isMessageObject = (typeof message === 'object'),
+  let isMessageObject = (typeof message === OBJECT_TYPE.OBJECT),
       msg = stringify(message);
 
-  if (typeof options !== 'object') {
+  if (typeof options !== OBJECT_TYPE.OBJECT) {
     options = {};
   }
   options.severity = severity;
@@ -47,10 +50,7 @@ function log (message, options, severity, instance) {
       return callback();
     }
 
-    msg = (transporter.json && !isMessageObject)
-        ? '{"message":"' + msg + '"}'
-        : msg;
-
+    msg = (transporter.json && !isMessageObject) ? MSG_START + msg + MSG_END : msg;
     transporter.write(msg, options, callback);
   }
 
@@ -63,7 +63,7 @@ function log (message, options, severity, instance) {
  * @private
  */
 function populateConfig (config) {
-  if (typeof config !== 'object') {
+  if (typeof config !== OBJECT_TYPE.OBJECT) {
     config = {};
   }
 
@@ -92,7 +92,7 @@ class HighLogger {
     for (let t in config.transporters) {
       if (config.transporters.hasOwnProperty(t)) {
         let transporterConfig = config.transporters[t];
-        if (typeof transporterConfig === 'object') {
+        if (typeof transporterConfig === OBJECT_TYPE.OBJECT) {
           transporterConfig.errorHandler = this.errorHandler;
           this.addTransporter(transporterConfig);
         }
@@ -179,19 +179,21 @@ class HighLogger {
   /**
    *
    * @param {string} prefix
-   * @returns {function}
+   * @returns {HighLogger~debug}
    */
   getDebug (prefix) {
     let self = this;
 
     /**
-     * @param message
+     * @callback HighLogger~debug
+     * @param {string} message
      * @param {Object} [options]
      */
-    return function highHighLoggerDebug (message, options) {
-      if (typeof options !== 'object') {
+    return function debug (message, options) {
+      if (typeof options !== OBJECT_TYPE.OBJECT) {
         options = {};
       }
+
       options.prefix = prefix;
       log(message, options, SEVERITY.DEBUG, self);
     };

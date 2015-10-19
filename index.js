@@ -14,13 +14,9 @@ const TRANSPORTER = SHARED_CONSTANTS.TRANSPORTER;
 const OBJECT_TYPE = SHARED_CONSTANTS.OBJECT_TYPE;
 const CONFIG_DEFAULT = {
   transporters: [{
-    type: TRANSPORTER.CONSOLE,
-    severity: {
-      minimum: SEVERITY.EMERGENCY,
-      maximum: SEVERITY.DEBUG
-    }
+    type: TRANSPORTER.CONSOLE
   }],
-  onErrorFunction: function defaultErrorHandler (err) {
+  errorHandler: function defaultErrorHandler (err) {
     if (err) {
       nodeConsole.error(err);
     }
@@ -86,17 +82,23 @@ class HighLogger {
    */
   constructor (config) {
     config = populateConfig(config);
-    this.errorHandler = config.onErrorFunction;
+    this.errorHandler = config.errorHandler;
 
     this.transporters = [];
     for (let t in config.transporters) {
-      if (config.transporters.hasOwnProperty(t)) {
-        let transporterConfig = config.transporters[t];
-        if (typeof transporterConfig === OBJECT_TYPE.OBJECT) {
-          transporterConfig.errorHandler = this.errorHandler;
-          this.addTransporter(transporterConfig);
-        }
+      if (!config.transporters.hasOwnProperty(t)) {
+        continue;
       }
+
+      let transporterConfig = config.transporters[t];
+      if (typeof transporterConfig !== OBJECT_TYPE.OBJECT) {
+        continue;
+      }
+
+      if (typeof transporterConfig.errorHandler !== OBJECT_TYPE.FUNCTION) {
+        transporterConfig.errorHandler = this.errorHandler;
+      }
+      this.addTransporter(transporterConfig);
     }
   }
 
@@ -124,7 +126,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   emergency (message, options) {
-    log(message, options, SEVERITY.EMERGENCY, this);
+    log(message, options, SEVERITY.EMERG, this);
   }
 
   /**
@@ -140,7 +142,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   critical (message, options) {
-    log(message, options, SEVERITY.CRITICAL, this);
+    log(message, options, SEVERITY.CRIT, this);
   }
 
   /**
@@ -156,7 +158,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   warning (message, options) {
-    log(message, options, SEVERITY.WARNING, this);
+    log(message, options, SEVERITY.WARN, this);
   }
 
   /**
@@ -201,17 +203,17 @@ class HighLogger {
 }
 
 /**
- * @type {module.exports.FACILITY}
+ * @type {SHARED_CONSTANTS.FACILITY|{KERN, USER, MAIL, DAEMON, AUTH, SYSLOG, LPR, NEWS, UUCP, CLOCK, SEC, FTP, NTP, AUDIT, ALERT, CLOCK2, LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7}}
  */
 HighLogger.FACILITY = FACILITY;
 
 /**
- * @type {module.exports.SEVERITY}
+ * @type {SHARED_CONSTANTS.SEVERITY|{EMERG, ALERT, CRIT, ERROR, WARN, NOTICE, INFO, DEBUG}}
  */
 HighLogger.SEVERITY = SEVERITY;
 
 /**
- * @type {module.exports.TRANSPORTER}
+ * @type {SHARED_CONSTANTS.TRANSPORTER|{CONSOLE, SOCKET, SYSLOG}}
  */
 HighLogger.TRANSPORTER = TRANSPORTER;
 

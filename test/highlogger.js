@@ -1,13 +1,16 @@
-"use strict";
+'use strict';
 
 let HighLogger = require('../index'),
+    AbstractTransporter = require('../lib/transporter/abstract'),
+    ConsoleTransporter = require('../lib/transporter/console'),
+    SocketTransporter = require('../lib/transporter/socket'),
+    SyslogTransporter = require('../lib/transporter/syslog'),
     assert = require('assert'),
     dgram = require('dgram'),
     socket = dgram.createSocket('udp4'),
-    count = 0,
-    doneCallback;
+    stream = require('stream');
 
-socket.on("error", function (err) {
+/*socket.on("error", function (err) {
   console.log("server error:\n" + err.stack);
   socket.close(doneCallback);
 });
@@ -36,13 +39,9 @@ let hl = new HighLogger({
         json: true
       }
   ]
-});
+});*/
 
-describe('module-logger-nodejs', function () {
+describe('highlogger', function () {
 
-  it('should listen', function (done) {
-    doneCallback = done;
-    hl.warning('STRING!');
-  });
 
 });

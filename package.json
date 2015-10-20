@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "there can log only one",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",
@@ -20,7 +20,7 @@
   "main": "./highlogger.js",
   "scripts": {
     "test": "node_modules/.bin/mocha",
-    "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- -R spec"
+    "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- --recursive -R spec"
   },
   "dependencies": {
     "async": "^1.4.2",
@@ -30,7 +30,8 @@
   "devDependencies": {
     "assert": "^1.3.0",
     "istanbul": "^0.3.21",
-    "mocha": "^2.3.3"
+    "mocha": "^2.3.3",
+    "moment-parseformat": "^1.1.3"
   },
   "keywords": [
     "syslog",

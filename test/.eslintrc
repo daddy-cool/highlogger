@@ -4,6 +4,8 @@
   },
   "rules": {
     "func-names": 0,
-    "max-nested-callbacks": 0
+    "max-nested-callbacks": 0,
+    "no-undef": 0,
+    "no-undefined": 0
   }
 }

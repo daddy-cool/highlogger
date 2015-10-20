@@ -3,6 +3,7 @@
 let nodeConsole = require('console'),
     async = require('async'),
     Console = require('./lib/transporter/console'),
+    AbstractTransporter = require('./lib/transporter/abstract'),
     Socket = require('./lib/transporter/socket'),
     Syslog = require('./lib/transporter/syslog'),
     stringify = require('./lib/stringify');
@@ -27,30 +28,36 @@ const MSG_END = '"}';
 
 /**
  * @param {string} message
+ * @param {Object} options
+ * @param {AbstractTransporter} transporter
+ * @param {Function} callback
+ */
+function writeToTransporter (message, options, transporter, callback) {
+  if (options.severity < transporter.severity.minimum || options.severity > transporter.severity.maximum) {
+    return callback();
+  }
+
+  if (transporter.json && !options.isOriginalMessageTypeObject) {
+    message = MSG_START + message + MSG_END;
+  }
+
+  transporter.write(message, options, callback);
+}
+
+/**
+ * @param {HighLogger} ctx
+ * @param {string} message
  * @param {Object} [options]
  * @param {number} [severity]
- * @param {HighLogger} instance
- * @private
  */
-function log (message, options, severity, instance) {
-  let isMessageObject = (typeof message === OBJECT_TYPE.OBJECT),
-      msg = stringify(message);
-
+function log (ctx, message, options, severity) {
   if (typeof options !== OBJECT_TYPE.OBJECT) {
     options = {};
   }
   options.severity = severity;
+  options.isOriginalMessageTypeObject = typeof message === OBJECT_TYPE.OBJECT;
 
-  function writeToTransporter (transporter, callback) {
-    if (options.severity < transporter.severity.minimum || options.severity > transporter.severity.maximum) {
-      return callback();
-    }
-
-    msg = (transporter.json && !isMessageObject) ? MSG_START + msg + MSG_END : msg;
-    transporter.write(msg, options, callback);
-  }
-
-  async.each(instance.transporters, writeToTransporter, instance.errorHandler);
+  async.each(ctx.transporters, writeToTransporter.bind(null, stringify(message), options), ctx.errorHandler);
 }
 
 /**
@@ -126,7 +133,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   emergency (message, options) {
-    log(message, options, SEVERITY.EMERG, this);
+    log(this, message, options, SEVERITY.EMERG);
   }
 
   /**
@@ -134,7 +141,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   alert (message, options) {
-    log(message, options, SEVERITY.ALERT, this);
+    log(this, message, options, SEVERITY.ALERT);
   }
 
   /**
@@ -142,7 +149,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   critical (message, options) {
-    log(message, options, SEVERITY.CRIT, this);
+    log(this, message, options, SEVERITY.CRIT);
   }
 
   /**
@@ -150,7 +157,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   error (message, options) {
-    log(message, options, SEVERITY.ERROR, this);
+    log(this, message, options, SEVERITY.ERROR);
   }
 
   /**
@@ -158,7 +165,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   warning (message, options) {
-    log(message, options, SEVERITY.WARN, this);
+    log(this, message, options, SEVERITY.WARN);
   }
 
   /**
@@ -166,7 +173,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   notice (message, options) {
-    log(message, options, SEVERITY.NOTICE, this);
+    log(this, message, options, SEVERITY.NOTICE);
   }
 
   /**
@@ -175,7 +182,7 @@ class HighLogger {
    * @param {Object} [options]
    */
   info (message, options) {
-    log(message, options, SEVERITY.INFO, this);
+    log(this, message, options, SEVERITY.INFO);
   }
 
   /**
@@ -197,7 +204,7 @@ class HighLogger {
       }
 
       options.prefix = prefix;
-      log(message, options, SEVERITY.DEBUG, self);
+      log(self, message, options, SEVERITY.DEBUG);
     };
   }
 }

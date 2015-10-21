@@ -17,7 +17,7 @@
       "email": "metin.kul@shopgate.com"
     }
   ],
-  "main": "./lib/highLogger.js",
+  "main": "./lib/highlogger.js",
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- --recursive -R spec"

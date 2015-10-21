@@ -1,6 +1,6 @@
 'use strict';
 
-let HighLogger = require('../lib/highLogger'),
+let HighLogger = require('../lib/highlogger'),
     assert = require('assert');
 
 const SHARED_CONSTANTS = require('../lib/shared-constants');

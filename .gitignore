@@ -16,3 +16,6 @@ node_modules
 
 # Coverage
 coverage
+
+# OS files
+.DS_Store

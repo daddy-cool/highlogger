@@ -1,13 +1,13 @@
-
 'use strict';
 
-let HighLogger = require('../../highlogger'),
-    SocketTransporter = require('../../lib/transporter/socket'),
+let SocketTransporter = require('../../lib/transporter/socket'),
     SyslogTransporter = require('../../lib/transporter/syslog'),
     moment = require('moment'),
     parseFormat = require('moment-parseformat'),
     assert = require('assert'),
     dgram = require('dgram');
+
+const SHARED_CONSTANTS = require('../../lib/shared-constants');
 
 function errorHandler (err) {
   assert.ifError(err);
@@ -25,16 +25,16 @@ describe('transporter syslog', function () {
       it('should set the default facility', function () {
         let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
 
-        assert.equal(syslogTransporter.facility, HighLogger.FACILITY.USER * 8);
+        assert.equal(syslogTransporter.facility, SHARED_CONSTANTS.FACILITY.USER * 8);
       });
 
       it('should set a custom facility', function () {
         let syslogTransporter = new SyslogTransporter({
           errorHandler: errorHandler,
-          facility: HighLogger.FACILITY.LOCAL0
+          facility: SHARED_CONSTANTS.FACILITY.LOCAL0
         });
 
-        assert.equal(syslogTransporter.facility, HighLogger.FACILITY.LOCAL0 * 8);
+        assert.equal(syslogTransporter.facility, SHARED_CONSTANTS.FACILITY.LOCAL0 * 8);
       });
 
       it('should not set a non-numerical facility', function () {

@@ -1,10 +1,11 @@
 'use strict';
 
-let HighLogger = require('../../highlogger'),
-    AbstractTransporter = require('../../lib/transporter/abstract'),
+let AbstractTransporter = require('../../lib/transporter/abstract'),
     ConsoleTransporter = require('../../lib/transporter/console'),
     assert = require('assert'),
     stream = require('stream');
+
+const SHARED_CONSTANTS = require('../../lib/shared-constants');
 
 function errorHandler (err) {
   assert.ifError(err);
@@ -51,9 +52,9 @@ describe('transporter console', function () {
             assert.ifError(err);
           };
 
-      for (let s in HighLogger.SEVERITY) {
-        if (HighLogger.SEVERITY.hasOwnProperty(s)) {
-          consoleTransporter.write(message, {severity: HighLogger.SEVERITY[s]}, errorCallback);
+      for (let s in SHARED_CONSTANTS.SEVERITY) {
+        if (SHARED_CONSTANTS.SEVERITY.hasOwnProperty(s)) {
+          consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY[s]}, errorCallback);
         }
       }
     });
@@ -93,9 +94,9 @@ describe('transporter console', function () {
         }
       });
 
-      for (let s in HighLogger.SEVERITY) {
-        if (HighLogger.SEVERITY.hasOwnProperty(s)) {
-          consoleTransporter.write(message, {severity: HighLogger.SEVERITY[s]}, errorCallback);
+      for (let s in SHARED_CONSTANTS.SEVERITY) {
+        if (SHARED_CONSTANTS.SEVERITY.hasOwnProperty(s)) {
+          consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY[s]}, errorCallback);
         }
       }
     });

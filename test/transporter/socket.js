@@ -1,4 +1,3 @@
-
 'use strict';
 
 let AbstractTransporter = require('../../lib/transporter/abstract'),

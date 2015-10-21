@@ -1,8 +1,9 @@
 'use strict';
 
-let HighLogger = require('../../highlogger'),
-    AbstractTransporter = require('../../lib/transporter/abstract'),
+let AbstractTransporter = require('../../lib/transporter/abstract'),
     assert = require('assert');
+
+const SHARED_CONSTANTS = require('../../lib/shared-constants');
 
 function errorHandler (err) {
   assert.ifError(err);
@@ -13,14 +14,14 @@ describe('transporter abstract', function () {
     it('should set default severity', function () {
       let abstractTransporter = new AbstractTransporter({errorHandler: errorHandler});
 
-      assert.equal(abstractTransporter.severity.minimum, HighLogger.SEVERITY.EMERG);
-      assert.equal(abstractTransporter.severity.maximum, HighLogger.SEVERITY.DEBUG);
+      assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.EMERG);
+      assert.equal(abstractTransporter.severity.maximum, SHARED_CONSTANTS.SEVERITY.DEBUG);
     });
 
     it('should set custom severity', function () {
       let severity = {
-            minimum: HighLogger.SEVERITY.CRIT,
-            maximum: HighLogger.SEVERITY.INFO
+            minimum: SHARED_CONSTANTS.SEVERITY.CRIT,
+            maximum: SHARED_CONSTANTS.SEVERITY.INFO
           },
           abstractTransporter = new AbstractTransporter({
             errorHandler: errorHandler,

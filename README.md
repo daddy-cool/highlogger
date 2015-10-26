@@ -1,7 +1,7 @@
 ```js
 let HighLogger = require('highlogger'),
-    hl = new HighLogger(),
-    debug = hl.getDebug();
+    hl = new HighLogger({debugKeys: {include: ['*']}}),
+    debug = hl.getDebug('myDebugPrefix');
 
 hl.error('this is a error message');
 debug('this is a debug message');

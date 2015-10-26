@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "fast, minimalistic logging module",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "license": "MIT",
   "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [
@@ -26,9 +26,17 @@
   },
   "keywords": [
     "syslog",
+    "syslogd",
+    "rsyslog",
+    "json",
     "log",
+    "logger",
+    "logging",
     "console",
+    "stream",
     "socket",
+    "udp",
+    "udp4",
     "RFC5424"
   ],
   "repository": "github:daddy-cool/highlogger",

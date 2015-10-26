@@ -21,6 +21,11 @@ $ npm install highlogger
   * syslog-logging via udp4 socket according to [RFC5424](https://tools.ietf.org/html/rfc5424)
   * debug prefixes, as well as white- and blacklisting of those
   * colors for console/stdout/stream
+  
+## ToDo's
+
+  * expand readme
+  * add options for message limits
 
 ## Tests
 

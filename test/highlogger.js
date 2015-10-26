@@ -88,6 +88,27 @@ describe('HighLogger', function () {
         });
       });
     });
+
+    describe('debugKeys', function () {
+      it('should set default debugKeys', function () {
+        let highLogger = new HighLogger();
+        assert.deepEqual(highLogger.debugKeys.include, []);
+        assert.deepEqual(highLogger.debugKeys.exclude, []);
+      });
+
+      it('should not set invalid debugKeys', function () {
+        let highLogger = new HighLogger({debugKeys: 1}),
+            highLogger2 = new HighLogger({debugKeys: {include: 1, exclude: 2}}),
+            highLogger3 = new HighLogger({debugKeys: {include: ['a', 1, 'c'], exclude: ['b', 2, 'd']}});
+
+        assert.deepEqual(highLogger.debugKeys.include, []);
+        assert.deepEqual(highLogger.debugKeys.exclude, []);
+        assert.deepEqual(highLogger2.debugKeys.include, []);
+        assert.deepEqual(highLogger2.debugKeys.exclude, []);
+        assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^a$'), new RegExp('^c$')]);
+        assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^b$'), new RegExp('^d$')]);
+      });
+    });
   });
 
   describe('log', function () {
@@ -294,18 +315,77 @@ describe('HighLogger', function () {
 
     describe('getDebug', function () {
 
-      it('should return debug function with default empty debugKey', function () {
-        let highLogger = new HighLogger({debugKeys: {include: ['*']}}),
-            debug = highLogger.getDebug('f');
+      it('should return notIncludedDebug if debugKey is not included', function () {
+        let highLogger = new HighLogger(),
+            highLogger2 = new HighLogger({debugKeys: {include: ['bar']}});
 
-        assert.equal(debug.name, 'debug');
+        assert.equal(highLogger.getDebug().name, 'notIncludedDebug');
+        assert.equal(highLogger2.getDebug('foo').name, 'notIncludedDebug');
       });
 
-      it('debug', function () {
-        let highLogger = new HighLogger({debugKeys: {include: ['*'], exclude: ['foo*']}}),
-            debug = highLogger.getDebug('f');
+      it('should return excludedDebug if debugKey is excluded', function () {
+        let highLogger = new HighLogger({debugKeys: {include: ['*'], exclude: ['foo*']}});
 
-        debug('foobar');
+        assert.equal(highLogger.getDebug('foo').name, 'excludedDebug');
+      });
+
+      it('should return debug if debugKey is included and not excluded', function () {
+        let highLogger = new HighLogger({debugKeys: {include: ['*bar*'], exclude: ['*foo*']}});
+
+        assert.equal(highLogger.getDebug('ffffbar').name, 'debug');
+        assert.equal(highLogger.getDebug('barfoobar').name, 'excludedDebug');
+      });
+
+      it('should set debugKey and set severity to debug', function (done) {
+        let socket = dgram.createSocket('udp4'),
+            debugKey = 'foobar',
+            facility = 10;
+
+        socket.on("error", function (err) {
+          assert.ifError(err);
+        });
+
+        socket.bind(null, function () {
+          let highLogger =  new HighLogger({
+                debugKeys: {include: ['*']},
+                transporters: [{type: HighLogger.TRANSPORTER.SYSLOG, port: socket.address().port, facility: facility}]
+              }),
+              debug = highLogger.getDebug(debugKey);
+
+          debug('message');
+        });
+
+        socket.on("message", function (msg) {
+          let messageSplitArray = msg.toString().split(' ');
+          assert.equal(messageSplitArray[5], debugKey);
+          assert.equal(messageSplitArray[0], '<' + (facility*8+SHARED_CONSTANTS.SEVERITY.DEBUG) + '>1');
+          socket.close(done);
+        });
+      });
+
+      it('should not overwrite passed debugKey', function (done) {
+        let socket = dgram.createSocket('udp4'),
+            notDebugKey = 'notFoobar';
+
+        socket.on("error", function (err) {
+          assert.ifError(err);
+        });
+
+        socket.bind(null, function () {
+          let highLogger =  new HighLogger({
+                debugKeys: {include: ['*']},
+                transporters: [{type: HighLogger.TRANSPORTER.SYSLOG, port: socket.address().port}]
+              }),
+              debug = highLogger.getDebug('foobar');
+
+          debug('message', {debugKey: notDebugKey});
+        });
+
+        socket.on("message", function (msg) {
+          let messageSplitArray = msg.toString().split(' ');
+          assert.equal(messageSplitArray[5], notDebugKey);
+          socket.close(done);
+        });
       });
 
     });

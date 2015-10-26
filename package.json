@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "there can log only one",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "assert": "^1.3.0",
-    "istanbul": "^0.3.21",
+    "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
     "moment-parseformat": "^1.1.3"
   },

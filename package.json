@@ -1,21 +1,11 @@
 {
   "name": "highlogger",
-  "description": "there can log only one",
-  "version": "1.6.0",
+  "description": "fast, minimalistic logging module",
+  "version": "1.6.1",
   "license": "MIT",
-  "author": {
-    "name": "Metin Kul",
-    "email": "metinkul@outlook.com"
-  },
+  "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [
-    {
-      "name": "Michael Freund",
-      "email": "michael.freund@shopgate.com"
-    },
-    {
-      "name": "Metin Kul",
-      "email": "metin.kul@shopgate.com"
-    }
+    "Michael Freund <michael.freund@shopgate.com>"
   ],
   "main": "./lib/highlogger.js",
   "scripts": {
@@ -37,7 +27,17 @@
   "keywords": [
     "syslog",
     "log",
+    "console",
+    "socket",
     "RFC5424"
   ],
-  "repository": "github:daddy-cool/highlogger"
+  "repository": "github:daddy-cool/highlogger",
+  "engines": {
+    "node": ">= 4.0.0"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "lib/"
+  ]
 }

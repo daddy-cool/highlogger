@@ -5,6 +5,8 @@ let AbstractTransporter = require('../../lib/transporter/abstract'),
     assert = require('assert'),
     dgram = require('dgram');
 
+const SHARED_CONSTANTS = require('../../lib/shared-constants');
+
 function errorHandler (err) {
   assert.ifError(err);
 }
@@ -116,6 +118,58 @@ describe('transporter socket', function () {
         });
 
         socketTransporter.write(message);
+      });
+    });
+
+    it('should only prepend debugKey on severity debug', function (done) {
+      let socket = dgram.createSocket('udp4'),
+          message = 'foobarMessage',
+          debugKey = 'foobarDebugKey',
+          debugRequest = false,
+          infoRequest = false,
+          triedDone = 0;
+
+      function tryDone(socket) {
+        triedDone++;
+        if (triedDone === 2) {
+          assert.ok(debugRequest);
+          assert.ok(infoRequest);
+          socket.close(done);
+        }
+      }
+
+      socket.on("error", function (err) {
+        assert.ifError(err);
+        socket.close(done);
+      });
+
+      socket.on("message", function (msg) {
+        msg = msg.toString();
+        if (msg === debugKey + ' ' + message) {
+          assert.equal(msg, debugKey + ' ' + message);
+          debugRequest = true;
+        } else {
+          assert.equal(msg, message);
+          infoRequest = true;
+        }
+
+        tryDone(socket);
+      });
+
+      socket.bind(null, function () {
+        let socketTransporter = new SocketTransporter({
+          errorHandler: errorHandler,
+          port: socket.address().port
+        });
+
+        socketTransporter.write(message, {
+          debugKey: debugKey,
+          severity: SHARED_CONSTANTS.SEVERITY.DEBUG
+        });
+
+        socketTransporter.write(message, {
+          debugKey: debugKey
+        });
       });
     });
   });

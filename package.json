@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "there can log only one",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "license": "MIT",
   "author": {
     "name": "Metin Kul",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "async": "^1.4.2",
+    "chalk": "^1.1.1",
     "moment": "^2.10.6",
     "unix-dgram": "^0.2.2"
   },

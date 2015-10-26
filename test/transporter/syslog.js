@@ -319,5 +319,69 @@ describe('transporter syslog', function () {
         });
       });
     });
+
+    it('should use debugKey as messageId only on debug severity', function (done) {
+      let facility = 10,
+          debugKey = 'foobarDebugKey',
+          message = 'foobarMsg',
+          socket = dgram.createSocket('udp4'),
+          debugRequest = false,
+          infoRequest = false,
+          triedDone = 0;
+
+      socket.on("error", function (err) {
+        assert.ifError(err);
+        socket.close(done);
+      });
+
+      function tryDone(socket) {
+        triedDone++;
+        if (triedDone === 2) {
+          assert.ok(debugRequest);
+          assert.ok(infoRequest);
+          socket.close(done);
+        }
+      }
+
+      socket.on("message", function (msg) {
+        let messageSplitArray = msg.toString().split(' ');
+        assert.equal(messageSplitArray[7], message);
+
+        if (messageSplitArray[0] === '<' + (facility*8+SHARED_CONSTANTS.SEVERITY.DEBUG) + '>1') {
+          assert.equal(messageSplitArray[5], debugKey);
+          debugRequest = true;
+        } else if (messageSplitArray[0] === '<' + (facility*8+SHARED_CONSTANTS.SEVERITY.INFO) + '>1') {
+          assert.equal(messageSplitArray[5], '-');
+          infoRequest = true;
+        } else {
+          assert.fail('this should never happen');
+        }
+
+        tryDone(socket);
+      });
+
+      socket.bind(null, function () {
+        let syslogTransporter = new SyslogTransporter({
+          errorHandler: errorHandler,
+          port: socket.address().port,
+          facility: facility
+        });
+
+        syslogTransporter.write(message, {
+          severity: SHARED_CONSTANTS.SEVERITY.DEBUG,
+          debugKey: debugKey
+        }, function (err) {
+          assert.ifError(err);
+        });
+
+        syslogTransporter.write(message, {
+          severity: SHARED_CONSTANTS.SEVERITY.INFO,
+          debugKey: debugKey
+        }, function (err) {
+          assert.ifError(err);
+        });
+      });
+    });
+
   });
 });

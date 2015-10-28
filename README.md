@@ -81,26 +81,36 @@ let config = {
 ## Configuration
 __type:__ `object`
 
+
+### errorHandler
+__type:__ `function`
+
+For `errorHandler` you can pass any function that should be called in case a transporter throws an error.
+The default will just log to node.js console (`process.stdout`).
+
+
+### debugKeys
+__type:__ `object`
+
+`debugKeys` should be an object containing two fields: `include` and `exclude`.
+Both must be an `array` of strings.
+
+Strings in `include` will set the whitelist for debug messages that should be logged.
+Strings in `exclude` will set the blacklist for debug messages that won't be logged.
+
+An `exclude` will overwrite an `include`.
+
 __Example__
 ```node
-let HighLogger = require('highlogger');
-
-let config = {transporters: [
-  {
-    type: HighLogger.TRANSPORTER.CONSOLE
-  },
-  {
-    type: HighLogger.TRANSPORTER.SYSLOG,
-    severity: {
-      minimum: HighLogger.SEVERITY.EMERG,
-      maximum: HighLogger.SEVERITY.DEBUG
-    },
-    facility: HighLogger.FACILITY.USER
+let config = {
+  debugKeys: {
+    include: ['foo*'],
+    exclude: ['foobar']
   }
-]};
-
-let logger = new HighLogger(config);
+};
 ```
+
+In this example any debug message whose debugKey starts with `foo` will be logged, except `foobar`.
 
 
 ### transporters
@@ -111,11 +121,11 @@ The default is a single console transporter.
 
 __Example__
 ```node
-{
+let config = {
   transporters: [
     {type: HighLogger.TRANSPORTER.CONSOLE}
   ]
-}
+};
 ```
 
 
@@ -123,7 +133,7 @@ __Example__
 __type:__ `object`
 
 The transporter config is different for each transporter type.
-These fields are supported by every transporter type:
+These fields are supported by every transporter:
 
   * `type`
   * `severity`
@@ -134,25 +144,12 @@ Support for other fields depends on the transporter type.
 ### transporter.severity
 __type:__ `object`
 
-`severity` should be an object containing the severity range this transporter should react on, defined by a minimum and maximum.
+`severity` should be an object containing two fields: `minimum` and `maximum`.
+This sets the severity range this transporter should react on.
 
-__Example__
-```node
-{
-  transporters: [
-    {
-      type: HighLogger.TRANSPORTER.CONSOLE,
-      severity: {
-        minimum: HighLogger.SEVERITY.EMERG,
-        maximum: HighLogger.SEVERITY.DEBUG
-      }
-    }
-  ]
-}
-```
+Both fields are optional but if present must either be a `number` or constant.
 
-
-###### Severity Constants
+Constants are:
 
 * `HighLogger.SEVERITY.EMERG`
 * `HighLogger.SEVERITY.ALERT`
@@ -163,67 +160,50 @@ __Example__
 * `HighLogger.SEVERITY.INFO`
 * `HighLogger.SEVERITY.DEBUG`
 
-
-#### transporter.severity.minimum
-__type:__ `number`
-
-Severity ranges from `HighLogger.SEVERITY.EMERG` to `HighLogger.SEVERITY.DEBUG`, or 0 to 7.
-Lower means a higher priority, so `HighLogger.SEVERITY.EMERG` is the lowest severity while `HighLogger.SEVERITY.DEBUG` is the highest.
-A transporter will not log any message with a severity lower than his minimum severity.
+A lower numbers means a higher priority, so `EMERG` is the lowest severity while `DEBUG` is the highest.
 
 __Example__
 ```node
-{
+let config = {
   transporters: [
     {
       type: HighLogger.TRANSPORTER.CONSOLE,
       severity: {
-        minimum: HighLogger.SEVERITY.INFO
+        minimum: HighLogger.SEVERITY.ERROR,
+        maximum: HighLogger.SEVERITY.DEBUG
       }
     }
   ]
-}
+};
 ```
 
+In this example any message lower than `NOTICE` won't be sent to this transporter, meaning `EMERG`, `ALERT` and `CRIT` will be ignored.
 
-
-#### transporter.severity.maximum
-__type:__ `number`
-
-Severity ranges from `HighLogger.SEVERITY.EMERG` to `HighLogger.SEVERITY.DEBUG`, or 0 to 7.
-A transporter will not log any message with a severity higher than his maximum severity.
-
-__Example__
-```node
-{
-  transporters: [
-    {
-      type: HighLogger.TRANSPORTER.CONSOLE,
-      severity: {
-        maximum: HighLogger.SEVERITY.INFO
-      }
-    }
-  ]
-}
-```
 
 ### transporter.type
 __type:__ `number`
+
 __required__
 
-__Example__
-```node
-  transporters: [{
-    type: HighLogger.TRANSPORTER.CONSOLE
-  }]
-```
+With `type` you can decide what kind of transporter you are setting up.
+This field is required and must either be a `number`or constant.
 
-
-###### Transporter Type Constants
+Constants are:
 
 * `HighLogger.TRANSPORTER.CONSOLE`
 * `HighLogger.TRANSPORTER.SOCKET`
 * `HighLogger.TRANSPORTER.SYSLOG`
+
+__Example__
+```node
+let config = {
+  transporters: [
+    {
+      type: HighLogger.TRANSPORTER.CONSOLE
+    }
+  ]
+}
+```
 
 
 #### transporter.type: HighLogger.TRANSPORTER.CONSOLE
@@ -236,7 +216,6 @@ _todo_
 
 #### transporter.type: HighLogger.TRANSPORTER.SYSLOG
 _todo_
-
 
 ## Singleton
 
@@ -254,6 +233,7 @@ This will only work if you previously instanced HighLogger at least once.
 In rare cases you might not be able to rely on node.js's built-in module caching, then you either need to inject/pass your instance of HighLogger to any place you're using it or use a service locator.
 
 ## Usage
+_todo_
 
 An instance of HighLogger offers these logging methods
 

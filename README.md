@@ -1,5 +1,5 @@
 [![npm](https://img.shields.io/npm/v/highlogger.svg)](https://www.npmjs.com/package/highlogger)
-[![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)]()
+[![Coverage Status](https://coveralls.io/repos/daddy-cool/highlogger/badge.svg?branch=master&service=github)](https://coveralls.io/github/daddy-cool/highlogger?branch=master)
 
 ## Installation
 

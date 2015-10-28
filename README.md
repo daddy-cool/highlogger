@@ -1,11 +1,5 @@
-```js
-let HighLogger = require('highlogger'),
-    hl = new HighLogger({debugKeys: {include: ['*']}}),
-    debug = hl.getDebug('myDebugPrefix');
-
-hl.error('this is a error message');
-debug('this is a debug message');
-```
+[![npm](https://img.shields.io/npm/v/highlogger.svg)](https://www.npmjs.com/package/highlogger)
+[![coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)]()
 
 ## Installation
 
@@ -13,24 +7,50 @@ debug('this is a debug message');
 $ npm install highlogger
 ```
 
+## Quick Start
+
+```node
+let HighLogger = require('highlogger');
+let logger = new HighLogger();
+
+logger.error('this is a error message');
+logger.notice('this is a notice message');
+```
+
+This will create a simple logger that logs everything to the default console (process.stdout).
+
 ## Features
 
-  * logging to default console/stdout
-  * logging to any writable stream
-  * logging to vanilla udp4 socket
-  * syslog-logging via udp4 socket according to [RFC5424](https://tools.ietf.org/html/rfc5424)
-  * debug prefixes, as well as white- and blacklisting of those
-  * colors for console/stdout/stream
-  * almost 100% test coverage
-  
-## ToDo's
+  * logging to several transporters
+    * default console (process.stdout)
+    * any writable stream
+    * udp4 socket
+    * syslog via udp4 socket according to [RFC5424](https://tools.ietf.org/html/rfc5424)
+  * debug prefixes, as well as white- and blacklisting depending on the debug prefix
+  * colors for console/streams
 
-  * expand readme
-  * add options for message limits
-  * add unix-domain socket support
-  * add direct file logging (already working by passing a writable filestream)
-  * add tcp4/6 socket support
-  * add udp6 socket support
+## Usage
+
+An instance of HighLogger offers the following basic logging methods:
+
+* emerg
+* crit
+* error
+* warn
+* notice
+* info
+
+## Setup
+
+HighLogger can be used without any configuration but won't offer much besides console.
+In order to use certain features - like other transporters - you will have to configure it.
+
+#### Constants
+
+HighLogger exposes several constants, they are available under SEVERITY, TRANSPORTER and FACILITY.
+See [available constants and how they can be used](doc/Constants) for further information.
+
+
 
 ## Tests
 
@@ -48,15 +68,21 @@ $ npm install
 $ npm run cover
 ```
 
+## Todo
+
+  * expand readme
+  * message limit (per transporter)
+  * support for third-party transporters
+  * direct file logging (already working by passing a writable filestream)
+  * unix-domain socket support
+  * tcp4/6 socket support
+  * udp6 socket support
+
 ## People
 
 The original author of HighLogger is me, [Metin Kul](https://github.com/daddy-cool)
 
 [List of all contributors](https://github.com/daddy-cool/highlogger/graphs/contributors)
-
-## Contribute
-
-You are welcome to send me pull requests, especially for new transporters :-)
 
 ## License
 

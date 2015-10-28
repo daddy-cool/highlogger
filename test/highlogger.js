@@ -12,6 +12,31 @@ const SHARED_CONSTANTS = require('../lib/shared-constants');
 
 describe('HighLogger', function () {
 
+  describe('getInstance', function () {
+    it('should throw an error if used before instancing', function () {
+      delete require.cache['/Users/Metin/Projects/highlogger/lib/highlogger.js'];
+      assert.throws(HighLogger.getInstance);
+    });
+
+    it('should return an instance if instanced at least once', function () {
+      delete require.cache['/Users/Metin/Projects/highlogger/lib/highlogger.js'];
+      new HighLogger();
+      assert.ok(HighLogger.getInstance() instanceof HighLogger);
+    });
+
+    it('should return the last instance', function () {
+      delete require.cache['/Users/Metin/Projects/highlogger/lib/highlogger.js'];
+      let hl1 = new HighLogger(),
+          hl2;
+
+      assert.equal(HighLogger.getInstance(), hl1);
+      hl2 = new HighLogger();
+
+      assert.notEqual(HighLogger.getInstance(), hl1);
+      assert.equal(HighLogger.getInstance(), hl2);
+    });
+  });
+
   describe('init', function () {
     describe('errorHandler', function () {
       it('should set a default errorHandler', function () {

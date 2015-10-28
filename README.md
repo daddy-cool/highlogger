@@ -1,4 +1,5 @@
 [![npm](https://img.shields.io/npm/v/highlogger.svg)](https://www.npmjs.com/package/highlogger)
+[![downloads](https://img.shields.io/npm/dt/highlogger.svg)](https://www.npmjs.com/package/highlogger)
 [![Coverage Status](https://coveralls.io/repos/daddy-cool/highlogger/badge.svg?branch=master&service=github)](https://coveralls.io/github/daddy-cool/highlogger?branch=master)
 
 ## Installation
@@ -48,7 +49,7 @@ In order to use certain features - like other transporters - you will have to co
 #### Constants
 
 HighLogger exposes several constants, they are available under SEVERITY, TRANSPORTER and FACILITY.
-See [available constants and how they can be used](doc/Constants) for further information.
+See [available constants and how they can be used](doc/Constants.md) for further information.
 
 
 

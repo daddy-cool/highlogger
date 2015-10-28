@@ -11,7 +11,7 @@
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- --recursive -R spec",
-    "coveralls": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+    "coveralls": "PATH=$PATH:node_modules/.bin istanbul cover _mocha --report lcovonly -- --recursive -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
   },
   "dependencies": {
     "async": "^1.4.2",
@@ -24,6 +24,7 @@
     "coveralls": "^2.11.4",
     "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
+    "mocha-lcov-reporter": "^1.0.0",
     "moment-parseformat": "^1.1.3"
   },
   "keywords": [

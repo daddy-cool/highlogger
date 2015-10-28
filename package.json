@@ -11,7 +11,7 @@
   "scripts": {
     "test": "node_modules/.bin/mocha",
     "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- --recursive -R spec",
-    "coveralls": "PATH=$PATH:node_modules/.bin istanbul cover _mocha --report lcovonly -- --recursive -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
+    "coveralls": "PATH=$PATH:node_modules/.bin istanbul cover _mocha --report lcovonly -- --recursive -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },
   "dependencies": {
     "async": "^1.4.2",

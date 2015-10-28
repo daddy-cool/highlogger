@@ -98,6 +98,9 @@ Both must be an `array` of strings.
 Strings in `include` will set the whitelist for debug messages that should be logged.
 Strings in `exclude` will set the blacklist for debug messages that won't be logged.
 
+`*` on it's own will match any string but can also be used as a wildcard at the beginning, in the middle and/or at the end of a string.
+So `foo*bar` would match any string that starts with `foo` and ends with `bar`.
+
 An `exclude` will overwrite an `include`.
 
 __Example__

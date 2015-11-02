@@ -1,4 +1,4 @@
-# HighLogger
+# highlogger
 [![npm](https://img.shields.io/npm/v/highlogger.svg)](https://www.npmjs.com/package/highlogger)
 [![Coverage Status](https://coveralls.io/repos/daddy-cool/highlogger/badge.svg?branch=master&service=github)](https://coveralls.io/github/daddy-cool/highlogger?branch=master)
 
@@ -24,29 +24,30 @@ $ npm install highlogger
 
 ## Quick Start
 ```node
-let HighLogger = require('highlogger');
-let logger = new HighLogger();
+let Highlogger = require('highlogger');
+let logger = new Highlogger();
 
 logger.error('this is a error message');
 logger.notice('this is a notice message');
 ```
 
-HighLogger can be used without any configuration but won't offer much besides the node.js console.
+Highlogger can be used without any configuration but won't offer much besides the node.js console.
 In order to use most features - like other transporters - you will have to configure it.
 
 
 ## Setup
-As mentioned above, HighLogger needs to be instanced at least once before you can use it and it will accept an object as parameter.
+As mentioned above, Highlogger needs to be instanced at least once before you can use it. It will accept an object as parameter.
+
 
 ```node
-let logger = new HighLogger(config);
+let logger = new Highlogger(config);
 ```
 
 __Default Configuration__
 ```node
 let config = {
   transporters: [{
-    type: HighLogger.TRANSPORTER.CONSOLE
+    type: Highlogger.TRANSPORTER.CONSOLE
   }],
   errorHandler: function (err) {
     if (err) {
@@ -60,18 +61,18 @@ let config = {
 };
 ```
 
-Per default HighLogger will just log to node.js console (`process.stdout`) and won't showing any debug messages, you can overwrite any of these fields simply by passing the matching attribute in the constructor.
+Per default Highlogger will just log to node.js console (`process.stdout`) and won't showing any debug messages, you can overwrite any of these fields simply by passing the matching attribute in the constructor.
 
 
 ### Constants
-HighLogger exposes several constants for configuration purposes
+Highlogger exposes several constants for configuration purposes
 
 __Example__
 ```node
 let config = {
   transporters: [
     {
-      type: HighLogger.TRANSPORTER.CONSOLE
+      type: Highlogger.TRANSPORTER.CONSOLE
     }
   ]
 };
@@ -113,7 +114,7 @@ let config = {
 };
 ```
 
-In this example any debug message whose debugKey starts with `foo` will be logged, except `foobar`.
+In this example any debug message, whose debugKey starts with `foo`, will be logged - except of course `foobar`.
 
 
 ### transporters
@@ -126,7 +127,7 @@ __Example__
 ```node
 let config = {
   transporters: [
-    {type: HighLogger.TRANSPORTER.CONSOLE}
+    {type: Highlogger.TRANSPORTER.CONSOLE}
   ]
 };
 ```
@@ -150,18 +151,18 @@ __type:__ `object`
 `severity` should be an object containing two fields: `minimum` and `maximum`.
 This sets the severity range this transporter should react on.
 
-Both fields are optional but if present must either be a `number` or constant.
+Both fields are optional and if one is passed it must either be a `number` or constant.
 
 Constants are:
 
-* `HighLogger.SEVERITY.EMERG`
-* `HighLogger.SEVERITY.ALERT`
-* `HighLogger.SEVERITY.CRIT`
-* `HighLogger.SEVERITY.ERROR`
-* `HighLogger.SEVERITY.WARN`
-* `HighLogger.SEVERITY.NOTICE`
-* `HighLogger.SEVERITY.INFO`
-* `HighLogger.SEVERITY.DEBUG`
+* `Highlogger.SEVERITY.EMERG`
+* `Highlogger.SEVERITY.ALERT`
+* `Highlogger.SEVERITY.CRIT`
+* `Highlogger.SEVERITY.ERROR`
+* `Highlogger.SEVERITY.WARN`
+* `Highlogger.SEVERITY.NOTICE`
+* `Highlogger.SEVERITY.INFO`
+* `Highlogger.SEVERITY.DEBUG`
 
 A lower numbers means a higher priority, so `EMERG` is the lowest severity while `DEBUG` is the highest.
 
@@ -170,17 +171,17 @@ __Example__
 let config = {
   transporters: [
     {
-      type: HighLogger.TRANSPORTER.CONSOLE,
+      type: Highlogger.TRANSPORTER.CONSOLE,
       severity: {
-        minimum: HighLogger.SEVERITY.ERROR,
-        maximum: HighLogger.SEVERITY.DEBUG
+        minimum: Highlogger.SEVERITY.ERROR,
+        maximum: Highlogger.SEVERITY.DEBUG
       }
     }
   ]
 };
 ```
 
-In this example any message lower than `NOTICE` won't be sent to this transporter, meaning `EMERG`, `ALERT` and `CRIT` will be ignored.
+In this example any message lower than `NOTICE` won't be sent to this transporter, which means `EMERG`, `ALERT` and `CRIT` will be ignored.
 
 
 ### transporter.type
@@ -193,38 +194,38 @@ This field is required and must either be a `number`or constant.
 
 Constants are:
 
-* `HighLogger.TRANSPORTER.CONSOLE`
-* `HighLogger.TRANSPORTER.SOCKET`
-* `HighLogger.TRANSPORTER.SYSLOG`
+* `Highlogger.TRANSPORTER.CONSOLE`
+* `Highlogger.TRANSPORTER.SOCKET`
+* `Highlogger.TRANSPORTER.SYSLOG`
 
 __Example__
 ```node
 let config = {
   transporters: [
     {
-      type: HighLogger.TRANSPORTER.CONSOLE
+      type: Highlogger.TRANSPORTER.CONSOLE
     }
   ]
 }
 ```
 
 
-#### transporter.type: HighLogger.TRANSPORTER.CONSOLE
+#### transporter.type: Highlogger.TRANSPORTER.CONSOLE
 _todo_
 
 
-#### transporter.type: HighLogger.TRANSPORTER.SOCKET
+#### transporter.type: Highlogger.TRANSPORTER.SOCKET
 _todo_
 
 
-#### transporter.type: HighLogger.TRANSPORTER.SYSLOG
+#### transporter.type: Highlogger.TRANSPORTER.SYSLOG
 _todo_
 
 ## Singleton
 
-HighLogger needs to be instanced at least once before usage, this means that you will have to pass it your desired configuration.
-If you don't want to create a new instance of HighLogger each time you will need to access the same instance you previously created.
-In most cases it will be enough to access HighLogger's built-in singleton functionality
+Highlogger needs to be instanced at least once with your desired configuration.
+You should always access the same instance of Highlogger you previously created, unless you specifically want to create a new instance of Highlogger with a different configuration.
+In most cases it should be enough to access Highlogger's built-in singleton functionality
 
 ```node
 let logger = require('highlogger').getInstance();
@@ -232,13 +233,13 @@ let logger = require('highlogger').getInstance();
 logger.notice('this is a error message');
 ```
 
-This will only work if you previously instanced HighLogger at least once.
-In rare cases you might not be able to rely on node.js's built-in module caching, then you either need to inject/pass your instance of HighLogger to any place you're using it or use a service locator.
+But keep in mind that this will work only if you previously instanced Highlogger at least once.
+In rare cases you might not be able to rely on node.js's built-in module caching, then you either need to inject/pass your instance of Highlogger to any place you're going to use it or use a service locator.
 
 ## Usage
 _todo_
 
-An instance of HighLogger offers these logging methods
+An instance of Highlogger offers these logging methods
 
 * `emerg`
 * `crit`
@@ -249,14 +250,14 @@ An instance of HighLogger offers these logging methods
 
 ## Tests
 
-To run the test suite, first install the dependencies, then run `npm test`:
+To run the test suite, install the dependencies first, then run `npm test`:
 
 ```bash
 $ npm install
 $ npm test
 ```
 
-To run test coverage, first install the dependencies, then run `npm run cover`:
+To check test coverage run `npm run cover`, after installing the dependencies:
 
 ```bash
 $ npm install
@@ -275,7 +276,7 @@ $ npm run cover
 
 ## People
 
-The original author of HighLogger is me, [Metin Kul](https://github.com/daddy-cool)
+The original author of Highlogger is me, [Metin Kul](https://github.com/daddy-cool)
 
 [List of all contributors](https://github.com/daddy-cool/highlogger/graphs/contributors)
 

@@ -86,10 +86,10 @@ __type:__ `object`
 
 The configuration object accepts the following attributes
 
-attribute | type
--|-
+attribute      | type
+-------------- | ----------
 `errorHandler` | `function`
-`debugKeys` | `object`
+`debugKeys`    | `object`
 `transporters` | `array`
 
 
@@ -150,11 +150,11 @@ __type:__ `object`
 The transporter config is different for each transporter type.
 These attributes are supported by every transporter:
 
-attribute | type
--|-
+attribute  | type
+---------- | ---------
 `severity` | `object`
-`json` | `boolean`
-`type` | `number`
+`json`     | `boolean`
+`type`     | `number`
 
 Other attributes are supported depending on the transporter type.
 

@@ -36,7 +36,7 @@ In order to use most features - like other transporters - you will have to confi
 
 
 ## Setup
-As mentioned above, HighLogger needs to be instanced at least once before you can use it and it will accept an object as parameter.
+As mentioned above, HighLogger needs to be instanced at least once, before you can use it. It will accept an object as parameter.
 
 ```node
 let logger = new HighLogger(config);
@@ -113,7 +113,7 @@ let config = {
 };
 ```
 
-In this example any debug message whose debugKey starts with `foo` will be logged, except `foobar`.
+In this example, any debug message, whose debugKey starts with `foo`, will be logged, except `foobar`.
 
 
 ### transporters
@@ -150,7 +150,7 @@ __type:__ `object`
 `severity` should be an object containing two fields: `minimum` and `maximum`.
 This sets the severity range this transporter should react on.
 
-Both fields are optional but if present must either be a `number` or constant.
+Both fields are optional, but if present they must be a `number` or constant.
 
 Constants are:
 
@@ -180,7 +180,7 @@ let config = {
 };
 ```
 
-In this example any message lower than `NOTICE` won't be sent to this transporter, meaning `EMERG`, `ALERT` and `CRIT` will be ignored.
+In this example, any message lower than `NOTICE`, won't be sent to this transporter, meaning `EMERG`, `ALERT` and `CRIT` will be ignored.
 
 
 ### transporter.type
@@ -222,9 +222,9 @@ _todo_
 
 ## Singleton
 
-HighLogger needs to be instanced at least once before usage, this means that you will have to pass it your desired configuration.
-If you don't want to create a new instance of HighLogger each time you will need to access the same instance you previously created.
-In most cases it will be enough to access HighLogger's built-in singleton functionality
+HighLogger needs to be instanced at least once before usage, what means that you will have to pass your desired configuration to it.
+If you don't want to create a new instance of HighLogger each time, you have to access the already created instance.
+In most cases, it should be enough to access HighLogger's built-in singleton functionality
 
 ```node
 let logger = require('highlogger').getInstance();
@@ -232,8 +232,8 @@ let logger = require('highlogger').getInstance();
 logger.notice('this is a error message');
 ```
 
-This will only work if you previously instanced HighLogger at least once.
-In rare cases you might not be able to rely on node.js's built-in module caching, then you either need to inject/pass your instance of HighLogger to any place you're using it or use a service locator.
+This will work only if you previously instanced HighLogger at least once.
+In rare cases, you might not be able to rely on node.js's built-in module caching, then you either need to inject/pass your instance of HighLogger to any place you're going to use it or use a service locator.
 
 ## Usage
 _todo_
@@ -249,14 +249,14 @@ An instance of HighLogger offers these logging methods
 
 ## Tests
 
-To run the test suite, first install the dependencies, then run `npm test`:
+To run the test suite, install the dependencies first, then run `npm test`:
 
 ```bash
 $ npm install
 $ npm test
 ```
 
-To run test coverage, first install the dependencies, then run `npm run cover`:
+To run test coverage run `npm run cover`, after installing the dependencies:
 
 ```bash
 $ npm install

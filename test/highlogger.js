@@ -56,20 +56,12 @@ describe('Highlogger', function () {
         assert.ok(typeof highLogger.errorHandler === 'function');
       });
 
-      it('should by default log to console.error on error', function (done) {
-        let consoleModule = require('console'),
-            consoleModuleLog = consoleModule.log;
-
-        consoleModule.log = function (err) {
-          assert.ok(err instanceof Error);
-          consoleModule.log = consoleModuleLog;
-          delete require.cache;
-          done();
-        };
-
-        new Highlogger({
-          transporters: [{type: -1}]
-        });
+      it('should by default throw an error on misuse', function () {
+        assert.throws(function () {
+          new Highlogger({
+            transporters: [{type: -1}]
+          });
+        }, 'should throw');
       });
     });
 
@@ -82,11 +74,11 @@ describe('Highlogger', function () {
 
       it('should set a custom transporters', function () {
         let highLogger = new Highlogger({
-          transporters: [{type: Highlogger.TRANSPORTER.SOCKET}, {type: Highlogger.TRANSPORTER.SYSLOG}]
+          transporters: [{type: Highlogger.TRANSPORTER.CONSOLE}, {type: Highlogger.TRANSPORTER.SYSLOG}]
         });
 
         assert.equal(highLogger.transporters.length, 2);
-        assert.ok(highLogger.transporters[0] instanceof SocketTransporter);
+        assert.ok(highLogger.transporters[0] instanceof ConsoleTransporter);
         assert.ok(highLogger.transporters[1] instanceof SyslogTransporter);
       });
 

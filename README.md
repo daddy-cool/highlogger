@@ -52,7 +52,11 @@ let config = {
   }],
   errorHandler: function (err) {
     if (err) {
-      console.log(err);
+      if (err instance of Error) {
+        throw err;
+      } else {
+        throw new Error(err);
+      }
     }
   },
   debugKeys: {
@@ -62,7 +66,7 @@ let config = {
 };
 ```
 
-Per default Highlogger will just log to console (`process.stdout`), won't show any debug messages and will log any errors to console (`process.stdout`) as well.
+Per default Highlogger will just log to console (`process.stdout`), won't show any debug messages and will throw all errors.
 You can overwrite any of these fields simply by passing the matching attribute in the config object.
 
 
@@ -86,18 +90,18 @@ __type:__ `object`
 
 The configuration object accepts the following attributes
 
-attribute      | type
--------------- | ----------
-`errorHandler` | `function`
-`debugKeys`    | `object`
-`transporters` | `array`
+attribute    | type
+------------ | ----------
+errorHandler | `function`
+debugKeys    | `object`
+transporters | `array`
 
 
 ### errorHandler
 __type:__ `function`
 
-For `errorHandler` you can pass a function that should be called in case a transporter throws an error.
-The default will just log to console (`process.stdout`).
+For `errorHandler` you can pass a function that should be called in case a transporter returns an error.
+The default will just throw all errors.
 
 
 ### debugKeys
@@ -150,11 +154,12 @@ __type:__ `object`
 The transporter config is different for each transporter type.
 These attributes are supported by every transporter:
 
-attribute  | type
----------- | ---------
-`severity` | `object`
-`json`     | `boolean`
-`type`     | `number`
+attribute    | type
+------------ | ---------
+severity     | `object`
+json         | `boolean`
+type         | `number`
+errorHandler | `function`
 
 Other attributes are supported depending on the transporter type.
 
@@ -246,17 +251,321 @@ let config = {
 }
 ```
 
+### transporter.errorHandler
+__type:__ `function`
 
-#### transporter.type: Highlogger.TRANSPORTER.CONSOLE
-_todo_
+Here you can overwrite the errorHandler for a single transporter.
+Defaults to the errorHandler of the Highlogger configuration.
+
+__Example__
+```node
+let config = {
+  transporters: [
+    {
+      type: Highlogger.TRANSPORTER.CONSOLE,
+      errorHandler: function (err) {
+        if (err) {
+          console.log(err);
+        }
+      }
+    }
+  ]
+}
+```
 
 
-#### transporter.type: Highlogger.TRANSPORTER.SOCKET
-_todo_
+#### transporter.type CONSOLE
+The following attributes are only available when transporter `type` is set to `Highlogger.TRANSPORTER.CONSOLE`
 
 
-#### transporter.type: Highlogger.TRANSPORTER.SYSLOG
-_todo_
+##### transporter.stream
+__type:__ `object`
+__default:__ `process.stdout`
+
+Here you can set in which stream to write all messages for this transporter.
+Defaults to your node.js console (`process.stdout`) but should support any writable stream, including e.g. filestreams (to log in a file).
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.CONSOLE,
+     stream: process.stdout
+   }
+ ]
+}
+```
+
+
+##### transporter.colors
+__type:__ `boolean`
+__default:__ `true`
+
+This flag decides whether or not messages for this transporter will be colored.
+Disable this if your `stream` doesn't support colors.
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.CONSOLE,
+     colors: false
+   }
+ ]
+}
+```
+
+
+#### transporter.type SOCKET
+The following attributes are only available when transporter `type` is set to `Highlogger.TRANSPORTER.SOCKET`
+
+
+##### transporter.method
+__type:__ `string`
+__required__
+
+Currently only supports `'udp4'`
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SOCKET,
+     method: 'udp4'
+   }
+ ]
+}
+```
+
+
+##### transporter.address
+__type:__ `string`
+__required__
+
+Expects the target IP/URL for sending messages.
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SOCKET,
+     address: '127.0.0.1'
+   }
+ ]
+}
+```
+
+
+##### transporter.port
+__type:__ `number`
+__required__
+
+Expects the target port for sending messages.
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SOCKET,
+     port: 43002
+   }
+ ]
+}
+```
+
+
+#### transporter.type SYSLOG
+The following attributes are only available when transporter `type` is set to `Highlogger.TRANSPORTER.SYSLOG`
+
+
+##### transporter.facility
+__type:__ `number`
+__default:__ `Highlogger.FACILITY.USER`
+
+This can be used to set your desired facility.
+If present it must either be a `number` or constant.
+
+Available constants
+
+* `Highlogger.FACILITY.KERN`
+* `Highlogger.FACILITY.USER`
+* `Highlogger.FACILITY.MAIL`
+* `Highlogger.FACILITY.DAEMON`
+* `Highlogger.FACILITY.AUTH`
+* `Highlogger.FACILITY.SYSLOG`
+* `Highlogger.FACILITY.LPR`
+* `Highlogger.FACILITY.NEWS`
+* `Highlogger.FACILITY.UUCP`
+* `Highlogger.FACILITY.CLOCK`
+* `Highlogger.FACILITY.SEC`
+* `Highlogger.FACILITY.FTP`
+* `Highlogger.FACILITY.NTP`
+* `Highlogger.FACILITY.AUDIT`
+* `Highlogger.FACILITY.ALERT`
+* `Highlogger.FACILITY.CLOCK2`
+* `Highlogger.FACILITY.LOCAL0`
+* `Highlogger.FACILITY.LOCAL1`
+* `Highlogger.FACILITY.LOCAL2`
+* `Highlogger.FACILITY.LOCAL3`
+* `Highlogger.FACILITY.LOCAL4`
+* `Highlogger.FACILITY.LOCAL5`
+* `Highlogger.FACILITY.LOCAL6`
+* `Highlogger.FACILITY.LOCAL7`
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     facility: Highlogger.FACILITY.LOCAL0
+   }
+ ]
+}
+```
+
+
+##### transporter.hostname
+__type:__ `string`
+__default:__ `require('os').hostname()`
+
+This allows you to set an hostname for your messages.
+This string will be filtered according to PRINTUSASCII and can only be a maximum of 255 characters (as defined in [RFC5424](https://tools.ietf.org/html/rfc5424#section-6))
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     hostname: 'PC-10-10-10-10'
+   }
+ ]
+}
+```
+
+
+##### transporter.appName
+__type:__ `string`
+__default:__ `'-'`
+
+This allows you to set an appName for your messages.
+This string will be filtered according to PRINTUSASCII and can only be a maximum of 48 characters (as defined in [RFC5424](https://tools.ietf.org/html/rfc5424#section-6))
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     appName: 'myNodeApplication'
+   }
+ ]
+}
+```
+
+
+##### transporter.processId
+__type:__ `string`
+__default:__ `process.pid`
+
+This allows you to set a processId for your messages.
+This string will be filtered according to PRINTUSASCII and can only be a maximum of 128 characters (as defined in [RFC5424](https://tools.ietf.org/html/rfc5424#section-6))
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     processId: '83123'
+   }
+ ]
+}
+```
+
+
+##### transporter.timezoneOffset
+__type:__ `number`
+__default:__ attempts to read your systems offset from UTC time
+
+This allows you to set a custom timezone offset for your messages.
+The offset must be from UTC time and in hours, only -16 to 16 are allowed.
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     timezoneOffset: 2
+   }
+ ]
+}
+```
+
+
+##### transporter.method
+__type:__ `string`
+__default:__ `'udp4'`
+
+Currently only supports `'udp4'`
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     method: 'udp4'
+   }
+ ]
+}
+```
+
+
+##### transporter.address
+__type:__ `string`
+__default:__ `'127.0.0.1'`
+
+Expects the target IP/URL for sending messages.
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     address: '127.0.0.1'
+   }
+ ]
+}
+```
+
+
+##### transporter.port
+__type:__ `number`
+__default:__ `514`
+
+Expects the target port for sending messages.
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: Highlogger.TRANSPORTER.SYSLOG,
+     port: 514
+   }
+ ]
+}
+```
+
 
 ## Singleton
 
@@ -273,17 +582,89 @@ logger.notice('this is a error message');
 But keep in mind that this will work only if you previously instanced Highlogger at least once.
 In rare cases you might not be able to rely on node.js's built-in module caching, then you either need to inject/pass your instance of Highlogger to any place you're going to use it or use a service locator.
 
+
 ## Usage
-_todo_
 
-An instance of Highlogger offers these logging methods
+An instance of Highlogger offers logging methods for each possible severity, the only exception being `DEBUG` (see below).
 
-* `emerg`
-* `crit`
-* `error`
-* `warn`
-* `notice`
-* `info`
+They can all be used with the same syntax:
+```node
+let logger = new Highlogger();
+
+logger.warn(message, options);
+```
+`message` is a required parameter (obviously), while `options` is optional.
+
+
+#### options
+__`type:`__ `object`
+
+This parameter is optional and currently only used by the `SYSLOG`-transporter.
+
+
+##### options.messageId
+__`type:`__ `string`
+__`default:`__ `'-'`
+
+This allows you to send a messageId with this message.
+This string will be filtered according to PRINTUSASCII and can only be a maximum of 32 characters (as defined in [RFC5424](https://tools.ietf.org/html/rfc5424#section-6))
+
+
+##### options.structuredData
+__`type:`__ `string`
+__`default:`__ `'-'`
+
+This allows you to send structuredData with this message.
+Currently this field is not filtered/validated in any way, so make sure to pay extra attention if you're going to use this.
+
+
+### Available methods
+
+
+### emerg(message, [options])
+Will pass on message and options with `Highlogger.SEVERITY.EMERG` severity to transporters.
+
+
+### crit(message, [options])
+Will pass on message and options with `Highlogger.SEVERITY.CRIT` severity to transporters.
+
+
+### error(message, [options])
+Will pass on message and options with `Highlogger.SEVERITY.ERROR` severity to transporters.
+
+
+### warn(message, [options])
+Will pass on message and options with `Highlogger.SEVERITY.WARN` severity to transporters.
+
+
+### info(message, [options])
+Will pass on message and options with `Highlogger.SEVERITY.INFO` severity to transporters.
+
+
+### getDebug(prefix)
+Debug gets special treatment.
+In order to use the debug-function you must first call `getDebug(prefix)` which will return a function.
+Depending on whether or not your passed `prefix` is currently included in `debugKeys` this will either return the `debug` or a dummy function.
+`debug` will work the same as the above functions, while the dummy function will just not do anything.
+This allows you to leave all your debug logs in your project without any harm and you can just enable/disable them on a whim.
+
+__Example__
+```node
+let logger = new Highlogger({
+  debugKeys: {
+    include: ['foobar']
+  }
+});
+let debug = logger.getDebug('foobar');
+
+debug('this is a debug message');
+```
+In the example this message would be logged because "foobar" is a whitelisted debug prefix/key. Otherwise it would not do anything.
+
+
+#### debug(message, [options])
+Will pass on message and options with `Highlogger.SEVERITY.DEBUG` severity to transporters.
+
 
 ## Tests
 
@@ -301,21 +682,24 @@ $ npm install
 $ npm run cover
 ```
 
+
 ## Todo
 
-  * expand readme
   * message limit (per transporter)
-  * support for third-party transporters
+  * support for transporter plugins
   * direct file logging transporter (already working by passing a filestream to console transporter)
-  * unix-domain socket transporter
+  * unix-domain support for socket transporter
   * tcp4/6 support for socket transporter
   * udp6 support for socket transporter
+  * filter structured data on syslog transporter
+
 
 ## People
 
 The original author of Highlogger is me, [Metin Kul](https://github.com/daddy-cool)
 
 [List of all contributors](https://github.com/daddy-cool/highlogger/graphs/contributors)
+
 
 ## License
 

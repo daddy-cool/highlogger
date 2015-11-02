@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "fast, minimalist logging module",
-  "version": "1.7.3",
+  "version": "1.8.0",
   "license": "MIT",
   "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [
@@ -9,7 +9,7 @@
   ],
   "main": "./lib/highlogger.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha --recursive",
+    "test": "node_modules/.bin/_mocha --recursive",
     "cover": "PATH=$PATH:node_modules/.bin istanbul cover _mocha -- --recursive -R spec",
     "coveralls": "PATH=$PATH:node_modules/.bin istanbul cover _mocha --report lcovonly -- --recursive -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
   },

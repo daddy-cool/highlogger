@@ -19,47 +19,30 @@ describe('transporter socket', function () {
   });
 
   describe('set socket', function () {
-    it('should initialize the default socket', function () {
-      let socketTransporter = new SocketTransporter({errorHandler: errorHandler});
-
-      assert.ok(typeof socketTransporter.socket !== 'undefined');
-    });
-
     it('should initialize udp4 socket', function () {
-      let socketTransporter = new SocketTransporter({errorHandler: errorHandler, method: 'udp'});
+      let socketTransporter = new SocketTransporter({
+        errorHandler: errorHandler,
+        method: 'udp4',
+        address: '127.0.0.1',
+        port: 514
+      });
 
       assert.ok(typeof socketTransporter.socket !== 'undefined');
     });
 
-    it('should not initialize other socket', function (done) {
-      let doneCount = 0,
-          socketTransporter;
-
-      function doneWait () {
-        doneCount++;
-        if (doneCount === 2) {
-          return done();
-        }
-      }
-
-      socketTransporter = new SocketTransporter({errorHandler: function (err) {
-        assert.equal(err.message, 'unsupported socket method "tcp"');
-        doneWait();
-      }, method: 'tcp'});
-
-      assert.equal(typeof socketTransporter.socket, 'undefined');
-      doneWait();
+    it('should not initialize without socket', function () {
+      assert.throws(function () {
+        new SocketTransporter({
+          errorHandler: errorHandler,
+          address: '127.0.0.1',
+          port: 514
+        });
+      }, 'should throw');
     });
   });
 
   describe('set address', function () {
-    it('should set the default address', function () {
-      let socketTransporter = new SocketTransporter({errorHandler: errorHandler});
-
-      assert.equal(socketTransporter.address, '127.0.0.1');
-    });
-
-    it('should set a custom address', function () {
+    it('should set an address', function () {
       let customAddress = '192.168.178.1',
           socketTransporter = new SocketTransporter({errorHandler: errorHandler, address: customAddress});
 

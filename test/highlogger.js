@@ -117,7 +117,8 @@ describe('Highlogger', function () {
       it('should not set invalid debugKeys', function () {
         let highLogger = new Highlogger({debugKeys: 1}),
             highLogger2 = new Highlogger({debugKeys: {include: 1, exclude: 2}}),
-            highLogger3 = new Highlogger({debugKeys: {include: ['a', 1, 'c'], exclude: ['b', 2, 'd']}});
+            highLogger3 = new Highlogger({debugKeys: {include: ['a', 1, 'c'], exclude: ['b', 2, 'd']}}),
+            highLogger4 = new Highlogger({debugKeys: {include: ['*'], exclude: null}});
 
         assert.deepEqual(highLogger.debugKeys.include, []);
         assert.deepEqual(highLogger.debugKeys.exclude, []);
@@ -125,6 +126,8 @@ describe('Highlogger', function () {
         assert.deepEqual(highLogger2.debugKeys.exclude, []);
         assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^a$'), new RegExp('^c$')]);
         assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^b$'), new RegExp('^d$')]);
+        assert.deepEqual(highLogger4.debugKeys.include, [/^.*?$/]);
+        assert.deepEqual(highLogger4.debugKeys.exclude, []);
       });
     });
   });

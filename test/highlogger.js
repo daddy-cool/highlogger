@@ -56,20 +56,19 @@ describe('Highlogger', function () {
         assert.ok(typeof highLogger.errorHandler === 'function');
       });
 
-      it('should by default log to console.error on error', function (done) {
-        let consoleModule = require('console'),
-            consoleModuleLog = consoleModule.log;
+      it('should by default throw an error on misuse', function () {
+        assert.throws(function () {
+          new Highlogger({
+            transporters: [{type: -1}]
+          });
+        }, 'should throw');
+      });
 
-        consoleModule.log = function (err) {
-          assert.ok(err instanceof Error);
-          consoleModule.log = consoleModuleLog;
-          delete require.cache;
-          done();
-        };
-
-        new Highlogger({
-          transporters: [{type: -1}]
-        });
+      it('should by default convert an error message into an error', function () {
+        let hl = new Highlogger();
+        assert.throws(function () {
+          hl.errorHandler('foobar');
+        }, 'this should throw');
       });
     });
 
@@ -82,11 +81,11 @@ describe('Highlogger', function () {
 
       it('should set a custom transporters', function () {
         let highLogger = new Highlogger({
-          transporters: [{type: Highlogger.TRANSPORTER.SOCKET}, {type: Highlogger.TRANSPORTER.SYSLOG}]
+          transporters: [{type: Highlogger.TRANSPORTER.CONSOLE}, {type: Highlogger.TRANSPORTER.SYSLOG}]
         });
 
         assert.equal(highLogger.transporters.length, 2);
-        assert.ok(highLogger.transporters[0] instanceof SocketTransporter);
+        assert.ok(highLogger.transporters[0] instanceof ConsoleTransporter);
         assert.ok(highLogger.transporters[1] instanceof SyslogTransporter);
       });
 
@@ -125,7 +124,8 @@ describe('Highlogger', function () {
       it('should not set invalid debugKeys', function () {
         let highLogger = new Highlogger({debugKeys: 1}),
             highLogger2 = new Highlogger({debugKeys: {include: 1, exclude: 2}}),
-            highLogger3 = new Highlogger({debugKeys: {include: ['a', 1, 'c'], exclude: ['b', 2, 'd']}});
+            highLogger3 = new Highlogger({debugKeys: {include: ['a', 1, 'c'], exclude: ['b', 2, 'd']}}),
+            highLogger4 = new Highlogger({debugKeys: {include: ['*'], exclude: null}});
 
         assert.deepEqual(highLogger.debugKeys.include, []);
         assert.deepEqual(highLogger.debugKeys.exclude, []);
@@ -133,6 +133,8 @@ describe('Highlogger', function () {
         assert.deepEqual(highLogger2.debugKeys.exclude, []);
         assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^a$'), new RegExp('^c$')]);
         assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^b$'), new RegExp('^d$')]);
+        assert.deepEqual(highLogger4.debugKeys.include, [/^.*?$/]);
+        assert.deepEqual(highLogger4.debugKeys.exclude, []);
       });
     });
   });
@@ -236,12 +238,26 @@ describe('Highlogger', function () {
       it('should only log on transporters with matching severity range', function (done) {
         let highLogger = new Highlogger({
               transporters: [
-                  {type: Highlogger.TRANSPORTER.SYSLOG, port: port, severity: {
-                    minimum: Highlogger.SEVERITY.EMERG, maximum: Highlogger.SEVERITY.EMERG
-                  }},
-                  {type: Highlogger.TRANSPORTER.SYSLOG, port: port2, severity: {
-                    minimum: Highlogger.SEVERITY.INFO, maximum: Highlogger.SEVERITY.INFO
-                  }}
+                  {
+                    type: Highlogger.TRANSPORTER.SOCKET,
+                    port: port,
+                    severity: {
+                      minimum: Highlogger.SEVERITY.EMERG,
+                      maximum: Highlogger.SEVERITY.EMERG
+                    },
+                    address: '127.0.0.1',
+                    method: 'udp4'
+                  },
+                  {
+                    type: Highlogger.TRANSPORTER.SOCKET,
+                    port: port2,
+                    severity: {
+                      minimum: Highlogger.SEVERITY.INFO,
+                      maximum: Highlogger.SEVERITY.INFO
+                    },
+                    address: '127.0.0.1',
+                    method: 'udp4'
+                  }
               ]
             }),
             doneCount = 0;
@@ -254,16 +270,12 @@ describe('Highlogger', function () {
         }
 
         socket.on("message", function (msg) {
-          let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[0], '<' + (Highlogger.FACILITY.USER*8) + '>1');
-          assert.equal(messageSplitArray[7], message+'emerg');
+          assert.equal(msg.toString(), message+'emerg');
           doneWait();
         });
 
         socket2.on("message", function (msg) {
-          let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[0], '<' + (Highlogger.FACILITY.USER*8+6) + '>1');
-          assert.equal(messageSplitArray[7], message+'info');
+          assert.equal(msg.toString(), message+'info');
           doneWait();
         });
 

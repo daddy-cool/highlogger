@@ -1,0 +1,41 @@
+# NPM ready
+test
+.eslintrc
+.gitignore
+
+# IntelliJ project files
+.idea
+out
+gen
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# OS X
+.DS_Store*
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.directory
+*~
+
+# npm
+node_modules
+*.gz
+
+# Coveralls
+coverage
+
+# Benchmarking
+benchmarks/graphs

@@ -21,6 +21,63 @@ describe('transporter syslog', function () {
       assert.ok(syslogTransporter instanceof SocketTransporter);
     });
 
+    describe('set address', function () {
+      it('should set the default address', function () {
+        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+
+        assert.equal(syslogTransporter.address, '127.0.0.1');
+      });
+
+      it('should set a custom address', function () {
+        let syslogTransporter = new SyslogTransporter({
+          errorHandler: errorHandler,
+          address: 'foobar'
+        });
+
+        assert.equal(syslogTransporter.address, 'foobar');
+      });
+
+      it('should not set a non-string address', function () {
+        //noinspection JSCheckFunctionSignatures
+        let syslogTransporter = new SyslogTransporter({address: 123});
+
+        assert.equal(syslogTransporter.address, '127.0.0.1');
+      });
+    });
+
+    describe('set port', function () {
+      it('should set the default port', function () {
+        let syslogTransporter = new SyslogTransporter({});
+
+        assert.equal(syslogTransporter.port, 514);
+      });
+
+      it('should set a custom port', function () {
+        let syslogTransporter = new SyslogTransporter({port: 12345});
+
+        assert.equal(syslogTransporter.port, 12345);
+      });
+
+      it('should not set a non-numerical port', function () {
+        //noinspection JSCheckFunctionSignatures
+        let syslogTransporter = new SyslogTransporter({port: '123'});
+
+        assert.equal(syslogTransporter.port, 514);
+      });
+    });
+
+    describe('set method', function () {
+      it('should set the default method', function () {
+        let syslogTransporter1 = new SyslogTransporter({}),
+            syslogTransporter2 = new SyslogTransporter({method: 'udp6'}),
+            syslogTransporter3 = new SyslogTransporter({method: null});
+
+        assert.ok(typeof syslogTransporter1.socket !== 'undefined');
+        assert.ok(typeof syslogTransporter2.socket !== 'undefined');
+        assert.ok(typeof syslogTransporter3.socket !== 'undefined');
+      });
+    });
+
     describe('set facility', function () {
       it('should set the default facility', function () {
         let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});

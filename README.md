@@ -159,7 +159,6 @@ attribute    | type
 severity     | `object`
 json         | `boolean`
 type         | `number`
-errorHandler | `function`
 
 Other attributes are supported depending on the transporter type.
 
@@ -246,28 +245,6 @@ let config = {
   transporters: [
     {
       type: Highlogger.TRANSPORTER.CONSOLE
-    }
-  ]
-}
-```
-
-### transporter.errorHandler
-__type:__ `function`
-
-Here you can overwrite the errorHandler for a single transporter.
-Defaults to the errorHandler of the Highlogger configuration.
-
-__Example__
-```node
-let config = {
-  transporters: [
-    {
-      type: Highlogger.TRANSPORTER.CONSOLE,
-      errorHandler: function (err) {
-        if (err) {
-          console.log(err);
-        }
-      }
     }
   ]
 }

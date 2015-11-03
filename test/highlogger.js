@@ -63,6 +63,13 @@ describe('Highlogger', function () {
           });
         }, 'should throw');
       });
+
+      it('should by default convert an error message into an error', function () {
+        let hl = new Highlogger();
+        assert.throws(function () {
+          hl.errorHandler('foobar');
+        }, 'this should throw');
+      });
     });
 
     describe('transporter', function () {
@@ -231,12 +238,26 @@ describe('Highlogger', function () {
       it('should only log on transporters with matching severity range', function (done) {
         let highLogger = new Highlogger({
               transporters: [
-                  {type: Highlogger.TRANSPORTER.SYSLOG, port: port, severity: {
-                    minimum: Highlogger.SEVERITY.EMERG, maximum: Highlogger.SEVERITY.EMERG
-                  }},
-                  {type: Highlogger.TRANSPORTER.SYSLOG, port: port2, severity: {
-                    minimum: Highlogger.SEVERITY.INFO, maximum: Highlogger.SEVERITY.INFO
-                  }}
+                  {
+                    type: Highlogger.TRANSPORTER.SOCKET,
+                    port: port,
+                    severity: {
+                      minimum: Highlogger.SEVERITY.EMERG,
+                      maximum: Highlogger.SEVERITY.EMERG
+                    },
+                    address: '127.0.0.1',
+                    method: 'udp4'
+                  },
+                  {
+                    type: Highlogger.TRANSPORTER.SOCKET,
+                    port: port2,
+                    severity: {
+                      minimum: Highlogger.SEVERITY.INFO,
+                      maximum: Highlogger.SEVERITY.INFO
+                    },
+                    address: '127.0.0.1',
+                    method: 'udp4'
+                  }
               ]
             }),
             doneCount = 0;
@@ -249,16 +270,12 @@ describe('Highlogger', function () {
         }
 
         socket.on("message", function (msg) {
-          let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[0], '<' + (Highlogger.FACILITY.USER*8) + '>1');
-          assert.equal(messageSplitArray[7], message+'emerg');
+          assert.equal(msg.toString(), message+'emerg');
           doneWait();
         });
 
         socket2.on("message", function (msg) {
-          let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[0], '<' + (Highlogger.FACILITY.USER*8+6) + '>1');
-          assert.equal(messageSplitArray[7], message+'info');
+          assert.equal(msg.toString(), message+'info');
           doneWait();
         });
 

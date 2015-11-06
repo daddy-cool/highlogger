@@ -210,7 +210,7 @@ describe('transporter console', function () {
 
                 if (typeof tests[testKey] === 'undefined') {
                   assert.fail('this should never happen');
-                  done();
+                  return done();
                 }
 
                 assert.equal(msg[0], chalk[tests[testKey].color](tests[testKey].key));

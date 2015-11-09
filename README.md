@@ -52,7 +52,7 @@ let config = {
   }],
   errorHandler: function (err) {
     if (err) {
-      if (err instance of Error) {
+      if (err instanceof Error) {
         throw err;
       } else {
         throw new Error(err);

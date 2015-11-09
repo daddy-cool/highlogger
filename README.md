@@ -662,8 +662,10 @@ $ npm run cover
 
 ## Todo
 
-  * message limit (per transporter)
-  * support for transporter plugins
+  * message limit (per transporter?)
+  * remove moment dependency
+  * allow multiple message params
+  * support for external transporter plugins
   * direct file logging transporter (already working by passing a filestream to console transporter)
   * unix-domain support for socket transporter
   * tcp4/6 support for socket transporter

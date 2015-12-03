@@ -146,7 +146,7 @@
     "func-style": 0,
     "func-names": 1,
     "eol-last": 0,
-    "consistent-this": [1, "self"],
+    "consistent-this": [0, "self"],
     "computed-property-spacing": [1, "never"],
     "comma-style": [1, "last"],
     "comma-spacing": 1,

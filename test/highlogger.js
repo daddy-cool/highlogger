@@ -81,12 +81,12 @@ describe('Highlogger', function () {
 
       it('should set a custom transporters', function () {
         let highLogger = new Highlogger({
-          transporters: [{type: Highlogger.TRANSPORTER.CONSOLE}, {type: Highlogger.TRANSPORTER.SYSLOG}]
+          transporters: [{type: 'console'}, {type: 'syslog'}]
         });
 
         assert.equal(highLogger.transporters.length, 2);
-        assert.ok(highLogger.transporters[0] instanceof ConsoleTransporter);
-        assert.ok(highLogger.transporters[1] instanceof SyslogTransporter);
+        assert.ok(highLogger.transporters[0] instanceof SyslogTransporter);
+        assert.ok(highLogger.transporters[1] instanceof ConsoleTransporter);
       });
 
       it('should skip invalid transporter config', function () {
@@ -94,7 +94,7 @@ describe('Highlogger', function () {
               transporters: [1, 2]
             }),
             highLogger2 = new Highlogger({
-              transporters: [1, 2, {type: Highlogger.TRANSPORTER.CONSOLE}]
+              transporters: [1, 2, {type: 'console'}]
             });
 
         assert.equal(highLogger.transporters.length, 0);
@@ -141,21 +141,21 @@ describe('Highlogger', function () {
 
   describe('log', function () {
     describe('severity types', function () {
-      let facility = 10,
+      let facilityName = 'sec',
+          facility = 10,
           port,
           port2,
           socket,
           socket2,
           message = 'foobar',
-          messageId = 'foobar2',
           tests = [
-            ['emergency', Highlogger.SEVERITY.EMERG],
-            ['alert', Highlogger.SEVERITY.ALERT],
-            ['critical', Highlogger.SEVERITY.CRIT],
-            ['error', Highlogger.SEVERITY.ERROR],
-            ['warning', Highlogger.SEVERITY.WARN],
-            ['notice', Highlogger.SEVERITY.NOTICE],
-            ['info', Highlogger.SEVERITY.INFO]
+            ['emerg', 0],
+            ['alert', 1],
+            ['crit', 2],
+            ['error', 3],
+            ['warn', 4],
+            ['notice', 5],
+            ['info', 6]
           ];
 
       beforeEach(function (done) {
@@ -199,11 +199,11 @@ describe('Highlogger', function () {
       });
 
       tests.forEach(function (test) {
-        it('should log ' + test[0] + ' and pass options to all transporters', function (done) {
+        it('should log ' + test[0], function (done) {
           let highLogger = new Highlogger({
                 transporters: [
-                  {type: Highlogger.TRANSPORTER.SYSLOG, port: port, facility: facility},
-                  {type: Highlogger.TRANSPORTER.SYSLOG, port: port2, facility: facility}
+                  {type: 'syslog', port: port, facility: facilityName},
+                  {type: 'syslog', port: port2, facility: facilityName}
                 ]
               }),
               doneCount = 0;
@@ -218,7 +218,6 @@ describe('Highlogger', function () {
           socket.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[5], messageId+test[0]);
             assert.equal(messageSplitArray[7], message+test[0]);
             doneWait();
           });
@@ -226,12 +225,11 @@ describe('Highlogger', function () {
           socket2.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[5], messageId+test[0]);
             assert.equal(messageSplitArray[7], message+test[0]);
             doneWait();
           });
 
-          highLogger[test[0]](message+test[0], {messageId: messageId+test[0]});
+          highLogger[test[0]](message+test[0]);
         });
       });
 
@@ -239,21 +237,21 @@ describe('Highlogger', function () {
         let highLogger = new Highlogger({
               transporters: [
                   {
-                    type: Highlogger.TRANSPORTER.SOCKET,
+                    type: 'socket',
                     port: port,
                     severity: {
-                      minimum: Highlogger.SEVERITY.EMERG,
-                      maximum: Highlogger.SEVERITY.EMERG
+                      minimum: 'emerg',
+                      maximum: 'emerg'
                     },
                     address: '127.0.0.1',
                     method: 'udp4'
                   },
                   {
-                    type: Highlogger.TRANSPORTER.SOCKET,
+                    type: 'socket',
                     port: port2,
                     severity: {
-                      minimum: Highlogger.SEVERITY.INFO,
-                      maximum: Highlogger.SEVERITY.INFO
+                      minimum: 'info',
+                      maximum: 'info'
                     },
                     address: '127.0.0.1',
                     method: 'udp4'
@@ -279,7 +277,7 @@ describe('Highlogger', function () {
           doneWait();
         });
 
-        highLogger.emergency(message+'emerg');
+        highLogger.emerg(message+'emerg');
         highLogger.info(message+'info');
       });
     });

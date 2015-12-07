@@ -38,40 +38,6 @@ describe('Highlogger', function () {
   });
 
   describe('init', function () {
-    describe('errorHandler', function () {
-      it('should set a default errorHandler', function () {
-        let highLogger = new Highlogger();
-        assert.ok(typeof highLogger.errorHandler === 'function');
-      });
-
-      it('should set a custom errorHandler', function () {
-        let customErrorHandler = function () {},
-            highLogger = new Highlogger({errorHandler: customErrorHandler});
-
-        assert.equal(highLogger.errorHandler, customErrorHandler);
-      });
-
-      it('should not set a non-function errorHandler', function () {
-        let highLogger = new Highlogger({errorHandler: 'foobar'});
-        assert.ok(typeof highLogger.errorHandler === 'function');
-      });
-
-      it('should by default throw an error on misuse', function () {
-        assert.throws(function () {
-          new Highlogger({
-            transporters: [{type: -1}]
-          });
-        }, 'should throw');
-      });
-
-      it('should by default convert an error message into an error', function () {
-        let hl = new Highlogger();
-        assert.throws(function () {
-          hl.errorHandler('foobar');
-        }, 'this should throw');
-      });
-    });
-
     describe('transporter', function () {
       it('should set a default transporter', function () {
         let highLogger = new Highlogger();
@@ -106,16 +72,12 @@ describe('Highlogger', function () {
         assert.equal(highLogger2.transporters.length, 1);
       });
 
-      it('should call errorHandler on unsupported transporterType', function (done) {
-        let errorHandler = function (err) {
-          assert.equal(err.message, 'unsupported transporter');
-          done();
-        };
+      it('should call errorHandler on unsupported transporterType', function () {
+        function invalidTransporter () {
+          new Highlogger({transporters: [{type: -1}]});
+        }
 
-        new Highlogger({
-          errorHandler: errorHandler,
-          transporters: [{type: -1}]
-        });
+        assert.throws(invalidTransporter);
       });
     });
 

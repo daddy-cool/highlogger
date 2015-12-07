@@ -8,13 +8,9 @@ let AbstractTransporter = require('../../lib/transporter/abstract'),
 
 const SHARED_CONSTANTS = require('../../lib/shared-constants');
 
-function errorHandler (err) {
-  assert.ifError(err);
-}
-
 describe('transporter console', function () {
   it('should inherit from AbstractTransporter', function () {
-    let consoleTransporter = new ConsoleTransporter({errorHandler: errorHandler});
+    let consoleTransporter = new ConsoleTransporter({});
 
     assert.ok(consoleTransporter instanceof AbstractTransporter);
   });
@@ -37,17 +33,14 @@ describe('transporter console', function () {
             }
           }),
           consoleTransporter = new ConsoleTransporter({
-            errorHandler: errorHandler,
             stream: writableOutputStream,
             colors: false
           }),
-          errorCallback = function (err) {
-            assert.ifError(err);
-          };
+          cb = function () {};
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.ERROR}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.WARN}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.NOTICE}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.error}, cb);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.warn}, cb);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.notice}, cb);
     });
 
     it('should write emerg/crit/error severity to output with red color', function (done) {
@@ -67,17 +60,14 @@ describe('transporter console', function () {
             }
           }),
           consoleTransporter = new ConsoleTransporter({
-            errorHandler: errorHandler,
             stream: writableOutputStream,
             colors: true
           }),
-          errorCallback = function (err) {
-            assert.ifError(err);
-          };
+          cb = function () {};
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.emerg}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.crit}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.error}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.emerg}, cb);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.crit}, cb);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.error}, cb);
     });
 
     it('should write warning severity to output with yellow color', function (done) {
@@ -89,15 +79,11 @@ describe('transporter console', function () {
             }
           }),
           consoleTransporter = new ConsoleTransporter({
-            errorHandler: errorHandler,
             stream: writableOutputStream,
             colors: true
-          }),
-          errorCallback = function (err) {
-            assert.ifError(err);
-          };
+          });
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.warn}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.warn}, function () {});
     });
 
     it('should write notice/info/debug severity to output without color', function (done) {
@@ -117,17 +103,14 @@ describe('transporter console', function () {
             }
           }),
           consoleTransporter = new ConsoleTransporter({
-            errorHandler: errorHandler,
             stream: writableOutputStream,
             colors: true
           }),
-          errorCallback = function (err) {
-            assert.ifError(err);
-          };
+          cb = function () {};
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.NOTICE}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.INFO}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.DEBUG}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.notice}, cb);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.info}, cb);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.debug}, cb);
     });
 
     describe('debug', function () {
@@ -141,18 +124,14 @@ describe('transporter console', function () {
               }
             }),
             consoleTransporter = new ConsoleTransporter({
-              errorHandler: errorHandler,
               stream: writableOutputStream,
               colors: false
-            }),
-            errorCallback = function (err) {
-              assert.ifError(err);
-            };
+            });
 
         consoleTransporter.write(message, {
           debugKey: debugKey,
           severity: SHARED_CONSTANTS.SEVERITY.debug
-        }, errorCallback);
+        }, function () {});
       });
 
       it('should not prepend debugKey on any severity that is not debug', function (done) {
@@ -165,18 +144,14 @@ describe('transporter console', function () {
               }
             }),
             consoleTransporter = new ConsoleTransporter({
-              errorHandler: errorHandler,
               stream: writableOutputStream,
               colors: false
-            }),
-            errorCallback = function (err) {
-              assert.ifError(err);
-            };
+            });
 
         consoleTransporter.write(message, {
           debugKey: debugKey,
           severity: SHARED_CONSTANTS.SEVERITY.info
-        }, errorCallback);
+        }, function () {});
       });
 
       it('should remember color for each debugKey', function (done) {
@@ -223,26 +198,23 @@ describe('transporter console', function () {
               }
             }),
             consoleTransporter = new ConsoleTransporter({
-              errorHandler: errorHandler,
               stream: writableOutputStream,
               colors: true
             }),
-            errorCallback = function (err) {
-              assert.ifError(err);
-            };
+            cb = function () {};
 
         for (let t in tests) {
           consoleTransporter.write(t, {
             debugKey: tests[t].key,
             severity: SHARED_CONSTANTS.SEVERITY.debug
-          }, errorCallback);
+          }, cb);
         }
 
         for (let t in tests) {
           consoleTransporter.write(t, {
             debugKey: tests[t].key,
             severity: SHARED_CONSTANTS.SEVERITY.debug
-          }, errorCallback);
+          }, cb);
         }
       });
     });

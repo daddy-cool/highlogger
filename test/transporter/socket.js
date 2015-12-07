@@ -29,18 +29,15 @@ describe('transporter socket', function () {
       assert.ok(typeof socketTransporter.socket !== 'undefined');
     });
 
-    it('should not initialize without socket', function (done) {
-      let errorHandler = function (err) {
-        if (err instanceof Error) {
-          return done();
-        }
-      };
+    it('should not initialize without socket', function () {
+      function invalidSocket () {
+        new SocketTransporter({
+          address: '127.0.0.1',
+          port: 514
+        });
+      }
 
-      new SocketTransporter({
-        address: '127.0.0.1',
-        port: 514,
-        errorHandler: errorHandler
-      });
+      assert.throws(invalidSocket);
     });
   });
 
@@ -56,20 +53,18 @@ describe('transporter socket', function () {
       assert.equal(socketTransporter.address, customAddress);
     });
 
-    it('should not set a non-string address', function (done) {
-      let errorHandler = function (err) {
-            if (err instanceof Error) {
-              return done();
-            }
-          },
-          customAddress = new Buffer('test');
+    it('should not set a non-string address', function () {
+      let customAddress = new Buffer('test');
 
-      new SocketTransporter({
-        address: customAddress,
-        method: 'udp4',
-        port: 512,
-        errorHandler: errorHandler
-      });
+      function invalidSocket () {
+        new SocketTransporter({
+          address: customAddress,
+          method: 'udp4',
+          port: 512
+        });
+      }
+
+      assert.throws(invalidSocket);
     });
   });
 
@@ -86,20 +81,18 @@ describe('transporter socket', function () {
       assert.equal(socketTransporter.port, customPort);
     });
 
-    it('should not set a non-numerical port', function (done) {
-      let errorHandler = function (err) {
-            if (err instanceof Error) {
-              return done();
-            }
-          },
-          customPort = '22';
+    it('should not set a non-numerical port', function () {
+      let customPort = '22';
 
-      new SocketTransporter({
-        port: customPort,
-        method: 'udp4',
-        address: '127.0.0.1',
-        errorHandler: errorHandler
-      });
+      function invalidSocket () {
+        new SocketTransporter({
+          port: customPort,
+          method: 'udp4',
+          address: '127.0.0.1'
+        });
+      }
+
+      assert.throws(invalidSocket);
     });
   });
 
@@ -137,7 +130,7 @@ describe('transporter socket', function () {
           infoRequest = false,
           triedDone = 0;
 
-      function tryDone(socket) {
+      function tryDone () {
         triedDone++;
         if (triedDone === 2) {
           assert.ok(debugRequest);

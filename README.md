@@ -50,16 +50,7 @@ __Default Configuration__
 let config = {
   transporters: [{
     type: 'console'
-  }],
-  errorHandler: function (err) {
-    if (err) {
-      if (err instanceof Error) {
-        throw err;
-      } else {
-        throw new Error(err);
-      }
-    }
-  }
+  }]
 };
 ```
 
@@ -74,15 +65,7 @@ The configuration object accepts the following attributes
 
 attribute    | type
 ------------ | ----------
-errorHandler | `function`
 transporters | `array`
-
-
-### errorHandler
-__type:__ `function`
-
-For `errorHandler` you can pass a function that should be called in case a transporter returns an error.
-The default will just throw all errors.
 
 
 ### transporters

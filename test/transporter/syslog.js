@@ -5,34 +5,29 @@ let SocketTransporter = require('../../lib/transporter/socket'),
     moment = require('moment'),
     parseFormat = require('moment-parseformat'),
     assert = require('assert'),
+    path = require('path'),
+    fs = require('fs'),
     dgram = require('dgram');
 
 const SHARED_CONSTANTS = require('../../lib/shared-constants');
 
-function errorHandler (err) {
-  assert.ifError(err);
-}
-
 describe('transporter syslog', function () {
   describe('init', function () {
     it('should inherit from SocketTransporter', function () {
-      let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+      let syslogTransporter = new SyslogTransporter({});
 
       assert.ok(syslogTransporter instanceof SocketTransporter);
     });
 
     describe('set address', function () {
       it('should set the default address', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.address, '127.0.0.1');
       });
 
       it('should set a custom address', function () {
-        let syslogTransporter = new SyslogTransporter({
-          errorHandler: errorHandler,
-          address: 'foobar'
-        });
+        let syslogTransporter = new SyslogTransporter({address: 'foobar'});
 
         assert.equal(syslogTransporter.address, 'foobar');
       });
@@ -80,22 +75,19 @@ describe('transporter syslog', function () {
 
     describe('set facility', function () {
       it('should set the default facility', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
-        assert.equal(syslogTransporter.facility, 1 * 8);
+        assert.equal(syslogTransporter.facility, 8);
       });
 
       it('should set a custom facility', function () {
-        let syslogTransporter = new SyslogTransporter({
-          errorHandler: errorHandler,
-          facility: 'local0'
-        });
+        let syslogTransporter = new SyslogTransporter({facility: 'local0'});
 
         assert.equal(syslogTransporter.facility, 16 * 8);
       });
 
       it('should not set a non-numerical facility', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, facility: 'foobar'});
+        let syslogTransporter = new SyslogTransporter({facility: 'foobar'});
 
         assert.notEqual(syslogTransporter.facility, 'foobar');
       });
@@ -103,14 +95,14 @@ describe('transporter syslog', function () {
 
     describe('set hostname', function () {
       it('should set the default hostname', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.hostname, require('os').hostname());
       });
 
       it('should set a custom hostname', function () {
         let hostname = 'foobar',
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, hostname: hostname});
+            syslogTransporter = new SyslogTransporter({hostname: hostname});
 
         assert.equal(syslogTransporter.hostname, hostname);
       });
@@ -127,32 +119,51 @@ describe('transporter syslog', function () {
         printUsAsciiHostname = hostname;
         hostname = hostname.replace(new RegExp('foobar', 'g'), '\x20öäfoobar\x7fßü');
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, hostname: hostname});
+        syslogTransporter = new SyslogTransporter({hostname: hostname});
         assert.equal(syslogTransporter.hostname, printUsAsciiHostname);
 
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, hostname: '\x20\x7f'});
+        syslogTransporter = new SyslogTransporter({hostname: '\x20\x7f'});
         assert.equal(syslogTransporter.hostname, '-');
       });
 
       it('should not set a non-string hostname', function () {
         let hostname = new Buffer('foobar'),
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, hostname: hostname});
+            syslogTransporter = new SyslogTransporter({hostname: hostname});
 
         assert.notEqual(syslogTransporter.hostname, hostname);
       });
     });
 
     describe('set appName', function () {
-      it('should set the default appName', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+      it('should set the default appName to "-" if package.json not found', function () {
+        let syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.appName, '-');
       });
 
+      it('should set the default appName to package.json name', function () {
+        let syslogTransporter,
+            moduleName = 'highlogger',
+            packageJson = '{"name": "' + moduleName + '"}',
+            dir = require.main.filename.split(path.sep);
+
+        dir.pop();
+        dir.push('package.json');
+        dir = dir.join(path.sep);
+
+        fs.writeFileSync(dir, packageJson);
+
+        syslogTransporter = new SyslogTransporter({});
+
+        assert.equal(syslogTransporter.appName, 'highlogger');
+
+        fs.unlinkSync(dir);
+      });
+
       it('should set a custom appName', function () {
         let appName = 'foobar',
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, appName: appName});
+            syslogTransporter = new SyslogTransporter({appName: appName});
 
         assert.equal(syslogTransporter.appName, appName);
       });
@@ -169,16 +180,16 @@ describe('transporter syslog', function () {
         printUsAsciiAppName = appName;
         appName = appName.replace(new RegExp('foobar', 'g'), '\x20öäfoobar\x7fßü');
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, appName: appName});
+        syslogTransporter = new SyslogTransporter({appName: appName});
         assert.equal(syslogTransporter.appName, printUsAsciiAppName);
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, appName: '\x20\x7f'});
+        syslogTransporter = new SyslogTransporter({appName: '\x20\x7f'});
         assert.equal(syslogTransporter.appName, '-');
       });
 
       it('should not set a non-string appName', function () {
         let appName = new Buffer('foobar'),
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, appName: appName});
+            syslogTransporter = new SyslogTransporter({appName: appName});
 
         assert.notEqual(syslogTransporter.appName, appName);
       });
@@ -186,14 +197,14 @@ describe('transporter syslog', function () {
 
     describe('set processId', function () {
       it('should set the default processId', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.processId, process.pid);
       });
 
       it('should set a custom processId', function () {
         let processId = 'foobar',
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, processId: processId});
+            syslogTransporter = new SyslogTransporter({processId: processId});
 
         assert.equal(syslogTransporter.processId, processId);
       });
@@ -210,16 +221,16 @@ describe('transporter syslog', function () {
         printUsAsciiProcessId = processId;
         processId = processId.replace(new RegExp('foobar', 'g'), '\x20öäfoobar\x7fßü');
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, processId: processId});
+        syslogTransporter = new SyslogTransporter({processId: processId});
         assert.equal(syslogTransporter.processId, printUsAsciiProcessId);
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, processId: '\x20\x7f'});
+        syslogTransporter = new SyslogTransporter({processId: '\x20\x7f'});
         assert.equal(syslogTransporter.processId, '-');
       });
 
       it('should not set a non-string processId', function () {
         let processId = new Buffer('foobar'),
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, processId: processId});
+            syslogTransporter = new SyslogTransporter({processId: processId});
 
         assert.notEqual(syslogTransporter.processId, processId);
       });
@@ -227,19 +238,19 @@ describe('transporter syslog', function () {
 
     describe('set json', function () {
       it('should set default json', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.json, false);
       });
 
       it('should set custom json', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, json: true});
+        let syslogTransporter = new SyslogTransporter({json: true});
 
         assert.equal(syslogTransporter.json, true);
       });
 
       it('should not set non-boolean json', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler, json: 'foobar'});
+        let syslogTransporter = new SyslogTransporter({json: 'foobar'});
 
         assert.equal(syslogTransporter.json, false);
       });
@@ -256,10 +267,7 @@ describe('transporter syslog', function () {
 
       timezoneOffsetTests.forEach(function (timezoneOffsetTest) {
         it(timezoneOffsetTest[0], function () {
-          let syslogTransporter = new SyslogTransporter({
-            errorHandler: errorHandler,
-            timezoneOffset: timezoneOffsetTest[1]
-          });
+          let syslogTransporter = new SyslogTransporter({timezoneOffset: timezoneOffsetTest[1]});
           assert.equal(syslogTransporter.timezoneOffset, timezoneOffsetTest[2]);
         });
       });
@@ -269,14 +277,14 @@ describe('transporter syslog', function () {
   describe('write', function () {
     describe('filter messageId', function () {
       it('should set the default messageId', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.filterMessageId(), '-');
       });
 
       it('should set a custom messageId', function () {
         let messageId = 'foobar',
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+            syslogTransporter = new SyslogTransporter({});
 
         assert.equal(syslogTransporter.filterMessageId(messageId), messageId);
       });
@@ -293,13 +301,13 @@ describe('transporter syslog', function () {
         printUsAsciiMessageId = messageId;
         messageId = messageId.replace(new RegExp('foobar', 'g'), '\x20öäfoobar\x7fßü');
 
-        syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        syslogTransporter = new SyslogTransporter({});
         assert.equal(syslogTransporter.filterMessageId(messageId), printUsAsciiMessageId);
         assert.equal(syslogTransporter.filterMessageId('\x20\x7f'), '-');
       });
 
       it('should not set a non-string messageId', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
+        let syslogTransporter = new SyslogTransporter({});
 
         //noinspection JSCheckFunctionSignatures
         assert.equal(syslogTransporter.filterMessageId(new Buffer('foobar')), '-');
@@ -332,7 +340,6 @@ describe('transporter syslog', function () {
 
       socket.bind(null, function () {
         let syslogTransporter = new SyslogTransporter({
-          errorHandler: errorHandler,
           port: socket.address().port,
           facility: 'sec',
           hostname: hostname,
@@ -361,7 +368,7 @@ describe('transporter syslog', function () {
         socket.close(done);
       });
 
-      function tryDone() {
+      function tryDone () {
         triedDone++;
         if (triedDone === 2) {
           assert.ok(debugRequest);
@@ -389,7 +396,6 @@ describe('transporter syslog', function () {
 
       socket.bind(null, function () {
         let syslogTransporter = new SyslogTransporter({
-          errorHandler: errorHandler,
           port: socket.address().port,
           facility: 'sec'
         });

@@ -5,14 +5,10 @@ let AbstractTransporter = require('../../lib/transporter/abstract'),
 
 const SHARED_CONSTANTS = require('../../lib/shared-constants');
 
-function errorHandler (err) {
-  assert.ifError(err);
-}
-
 describe('transporter abstract', function () {
   describe('set severity', function () {
     it('should set default severity', function () {
-      let abstractTransporter = new AbstractTransporter({errorHandler: errorHandler});
+      let abstractTransporter = new AbstractTransporter({});
 
       assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.emerg);
       assert.equal(abstractTransporter.severity.maximum, SHARED_CONSTANTS.SEVERITY.debug);
@@ -24,7 +20,6 @@ describe('transporter abstract', function () {
             maximum: 'info'
           },
           abstractTransporter = new AbstractTransporter({
-            errorHandler: errorHandler,
             severity: severity
           });
 
@@ -38,7 +33,6 @@ describe('transporter abstract', function () {
             maximum: 'bar'
           },
           abstractTransporter = new AbstractTransporter({
-            errorHandler: errorHandler,
             severity: severity
           });
 
@@ -48,13 +42,10 @@ describe('transporter abstract', function () {
   });
 
   describe('write', function () {
-    it('should not write', function (done) {
-      let abstractTransporter = new AbstractTransporter({errorHandler: errorHandler});
+    it('should not write', function () {
+      let abstractTransporter = new AbstractTransporter({});
 
-      abstractTransporter.write(null, null, function (err) {
-        assert.equal(err.message, 'write not implemented');
-        done();
-      });
+      assert.throws(abstractTransporter.write);
     });
   });
 });

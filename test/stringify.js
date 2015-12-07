@@ -19,7 +19,7 @@ describe('stringify', function () {
 
   tests.forEach(function (test) {
     it(test[0], function () {
-      let stringifyResult = stringify(test[1]);
+      let stringifyResult = stringify(test[1], false, Infinity);
 
       assert.equal(stringifyResult, test[2]);
       assert.equal(typeof stringifyResult, 'string');
@@ -28,25 +28,33 @@ describe('stringify', function () {
 
   it('should convert error to string', function () {
     let error = new Error('foobar'),
-        errorString = stringify(error);
+        errorString;
+    error.customValue = 'foobar';
+
+    errorString = stringify(error, false, Infinity);
 
     assert.equal(JSON.parse(errorString).message, error.message);
     assert.equal(JSON.parse(errorString).stack, error.stack);
+    assert.equal(JSON.parse(errorString).customValue, 'foobar');
   });
 
-  it('should convert error to string when error occurs during object conversion', function () {
-    let obj = {a: 'foo'},
-        stringifyError;
+  it('should detect circular JSON and replace references with ~', function () {
+    let obj = {a: 'foo'};
     obj.b = obj;
 
-    stringifyError = JSON.parse(stringify(obj));
+    assert.equal('{"a":"foo","b":"~"}', stringify(obj, false, Infinity));
+  });
 
-    try {
-      JSON.stringify(obj);
-      assert.fail('this should not happen');
-    } catch (err) {
-      assert.equal(stringifyError.message, err.message);
-    }
+  it('should stringify arrays as object when json=true and just stringify otherwise', function () {
+    let arr = ['1', 'a', 'c'];
+
+    assert.equal(stringify(arr, true, Infinity), '{"0":"1","1":"a","2":"c"}');
+    assert.equal(stringify(arr, false, Infinity), '["1","a","c"]');
+  });
+
+  it('should change message if exceeding limit', function () {
+    assert.equal(stringify('foobar', true, 0), '{"0":"message exceeds size limit of transporter"}');
+    assert.equal(stringify('foobar', false, 0), 'message exceeds size limit of transporter');
   });
 
 });

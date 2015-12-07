@@ -81,12 +81,17 @@ describe('Highlogger', function () {
 
       it('should set a custom transporters', function () {
         let highLogger = new Highlogger({
-          transporters: [{type: 'console'}, {type: 'syslog'}]
+          transporters: [
+            {type: 'console'},
+            {type: 'syslog'},
+            {type: 'socket', port: 0, address: '127.0.0.1', method: 'udp4'}
+          ]
         });
 
-        assert.equal(highLogger.transporters.length, 2);
-        assert.ok(highLogger.transporters[0] instanceof SyslogTransporter);
-        assert.ok(highLogger.transporters[1] instanceof ConsoleTransporter);
+        assert.equal(highLogger.transporters.length, 3);
+        assert.ok(highLogger.transporters[0] instanceof SocketTransporter);
+        assert.ok(highLogger.transporters[1] instanceof SyslogTransporter);
+        assert.ok(highLogger.transporters[2] instanceof ConsoleTransporter);
       });
 
       it('should skip invalid transporter config', function () {
@@ -122,19 +127,31 @@ describe('Highlogger', function () {
       });
 
       it('should not set invalid debugKeys', function () {
-        let highLogger = new Highlogger({debugKeys: 1}),
-            highLogger2 = new Highlogger({debugKeys: {include: 1, exclude: 2}}),
-            highLogger3 = new Highlogger({debugKeys: {include: ['a', 1, 'c'], exclude: ['b', 2, 'd']}}),
-            highLogger4 = new Highlogger({debugKeys: {include: ['*'], exclude: null}});
+        let debug = process.env.DEBUG,
+            highLogger, highLogger2, highLogger3, highLogger4;
+
+        process.env.DEBUG = '';
+        highLogger = new Highlogger();
+
+        delete process.env.DEBUG;
+        highLogger2 = new Highlogger();
+
+        process.env.DEBUG = 'a, c, -b, -d';
+        highLogger3 = new Highlogger();
+
+        process.env.DEBUG = '*,   ';
+        highLogger4 = new Highlogger();
 
         assert.deepEqual(highLogger.debugKeys.include, []);
         assert.deepEqual(highLogger.debugKeys.exclude, []);
         assert.deepEqual(highLogger2.debugKeys.include, []);
         assert.deepEqual(highLogger2.debugKeys.exclude, []);
-        assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^a$'), new RegExp('^c$')]);
-        assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^b$'), new RegExp('^d$')]);
+        assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^c$'), new RegExp('^a$')]);
+        assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^d$'), new RegExp('^b$')]);
         assert.deepEqual(highLogger4.debugKeys.include, [/^.*?$/]);
         assert.deepEqual(highLogger4.debugKeys.exclude, []);
+
+        process.env.DEBUG = debug;
       });
     });
   });
@@ -305,13 +322,13 @@ describe('Highlogger', function () {
 
       it('should wrap message inside curly braces', function (done) {
         let highLogger = new Highlogger({
-              transporters: [{type: Highlogger.TRANSPORTER.SYSLOG, port: port, json: true}]
+              transporters: [{type: 'syslog', port: port, json: true}]
             }),
             message = 'foobar';
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], '{"message":"' + message + '"}');
+          assert.equal(messageSplitArray[7], '{"0":"' + message + '"}');
           done();
         });
 
@@ -320,7 +337,7 @@ describe('Highlogger', function () {
 
       it('should not wrap message inside curly braces', function (done) {
         let highLogger = new Highlogger({
-              transporters: [{type: Highlogger.TRANSPORTER.SYSLOG, port: port, json: false}]
+              transporters: [{type: 'syslog', port: port, json: false}]
             }),
             message = 'foobar';
 
@@ -335,7 +352,7 @@ describe('Highlogger', function () {
 
       it('should not wrap stringified objects inside curly braces', function (done) {
         let highLogger = new Highlogger({
-              transporters: [{type: Highlogger.TRANSPORTER.SYSLOG, port: port, json: true}]
+              transporters: [{type: 'syslog', port: port, json: true}]
             }),
             message = {foobar: 'foobar'};
 
@@ -352,30 +369,50 @@ describe('Highlogger', function () {
     describe('getDebug', function () {
 
       it('should return notIncludedDebug if debugKey is not included', function () {
-        let highLogger = new Highlogger(),
-            highLogger2 = new Highlogger({debugKeys: {include: ['bar']}});
+        let debug = process.env.DEBUG,
+            highLogger = new Highlogger(),
+            highLogger2;
 
-        assert.equal(highLogger.getDebug().name, 'notIncludedDebug');
+        process.env.DEBUG = 'bar';
+        highLogger2 = new Highlogger();
+
+        assert.equal(highLogger.getDebug().name, 'missingDebugKey');
         assert.equal(highLogger2.getDebug('foo').name, 'notIncludedDebug');
+
+        process.env.DEBUG = debug;
       });
 
       it('should return excludedDebug if debugKey is excluded', function () {
-        let highLogger = new Highlogger({debugKeys: {include: ['*'], exclude: ['foo*']}});
+        let debug = process.env.DEBUG,
+            highLogger;
+
+        process.env.DEBUG = '*, -foo*';
+        highLogger = new Highlogger();
 
         assert.equal(highLogger.getDebug('foo').name, 'excludedDebug');
+
+        process.env.DEBUG = debug;
       });
 
       it('should return debug if debugKey is included and not excluded', function () {
-        let highLogger = new Highlogger({debugKeys: {include: ['*bar*'], exclude: ['*foo*']}});
+        let debug = process.env.DEBUG,
+            highLogger;
+
+        process.env.DEBUG = '*bar*, -*foo*';
+        highLogger = new Highlogger();
 
         assert.equal(highLogger.getDebug('ffffbar').name, 'debug');
         assert.equal(highLogger.getDebug('barfoobar').name, 'excludedDebug');
+
+        process.env.DEBUG = debug;
       });
 
       it('should set debugKey and set severity to debug', function (done) {
-        let socket = dgram.createSocket('udp4'),
-            debugKey = 'foobar',
-            facility = 10;
+        let debug = process.env.DEBUG,
+            socket = dgram.createSocket('udp4'),
+            debugKey = 'foobar';
+
+        process.env.DEBUG = '*';
 
         socket.on("error", function (err) {
           assert.ifError(err);
@@ -383,54 +420,23 @@ describe('Highlogger', function () {
 
         socket.bind(null, function () {
           let highLogger =  new Highlogger({
-                debugKeys: {include: ['*']},
-                transporters: [{type: Highlogger.TRANSPORTER.SYSLOG, port: socket.address().port, facility: facility}]
+                transporters: [{type: 'syslog', port: socket.address().port, facility: 'sec'}]
               }),
-              debug = highLogger.getDebug(debugKey);
+              debugFn = highLogger.getDebug(debugKey);
 
-          debug('message');
+          debugFn('message');
         });
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
           assert.equal(messageSplitArray[5], debugKey);
-          assert.equal(messageSplitArray[0], '<' + (facility*8+SHARED_CONSTANTS.SEVERITY.DEBUG) + '>1');
+          assert.equal(messageSplitArray[0], '<' + (10*8+SHARED_CONSTANTS.SEVERITY.debug) + '>1');
+
+          process.env.DEBUG = debug;
           socket.close(done);
         });
       });
-
-      it('should not overwrite passed debugKey', function (done) {
-        let socket = dgram.createSocket('udp4'),
-            notDebugKey = 'notFoobar';
-
-        socket.on("error", function (err) {
-          assert.ifError(err);
-        });
-
-        socket.bind(null, function () {
-          let highLogger =  new Highlogger({
-                debugKeys: {include: ['*']},
-                transporters: [{type: Highlogger.TRANSPORTER.SYSLOG, port: socket.address().port}]
-              }),
-              debug = highLogger.getDebug('foobar');
-
-          debug('message', {debugKey: notDebugKey});
-        });
-
-        socket.on("message", function (msg) {
-          let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[5], notDebugKey);
-          socket.close(done);
-        });
-      });
-
     });
-  });
-
-  it('should expose the relevant shared constants', function () {
-    assert.equal(Highlogger.FACILITY, SHARED_CONSTANTS.FACILITY);
-    assert.equal(Highlogger.SEVERITY, SHARED_CONSTANTS.SEVERITY);
-    assert.equal(Highlogger.TRANSPORTER, SHARED_CONSTANTS.TRANSPORTER);
   });
 
 });

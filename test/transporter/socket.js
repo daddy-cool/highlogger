@@ -173,7 +173,7 @@ describe('transporter socket', function () {
 
         socketTransporter.write(message, {
           debugKey: debugKey,
-          severity: SHARED_CONSTANTS.SEVERITY.DEBUG
+          severity: SHARED_CONSTANTS.SEVERITY.debug
         });
 
         socketTransporter.write(message, {

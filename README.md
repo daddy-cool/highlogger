@@ -14,13 +14,14 @@ $ npm install highlogger
   * logging to multiple transporters at once
   * multiple transporters
     * console, accepts any writable stream but will default to `process.stdout`
-    * unix-dgram socket, supporting udp4 for now
-    * syslog, with complete support for [RFC5424](https://tools.ietf.org/html/rfc5424) (logs only via udp4 for now)
+    * dgram socket, supporting udp4 for now
+    * syslog, with complete support for [RFC5424](https://tools.ietf.org/html/rfc5424) (only via udp4 for now)
   * set different severity ranges per transporter, transporter will only log messages within their severity range
   * debug prefixes/keys
     * white- and blacklisting for debug messages based on their prefix/key
   * colors for console/streams
   * optional singleton use to retain configuration across a whole project
+  * max message length per transporter
 
 
 ## Quick Start
@@ -48,7 +49,7 @@ __Default Configuration__
 ```node
 let config = {
   transporters: [{
-    type: Highlogger.TRANSPORTER.CONSOLE
+    type: 'console'
   }],
   errorHandler: function (err) {
     if (err) {
@@ -58,31 +59,12 @@ let config = {
         throw new Error(err);
       }
     }
-  },
-  debugKeys: {
-    include: [],
-    exclude: []
   }
 };
 ```
 
 Per default Highlogger will just log to console (`process.stdout`), won't show any debug messages and will throw all errors.
 You can overwrite any of these fields simply by passing the matching attribute in the config object.
-
-
-### Constants
-Highlogger exposes several constants for configuration purposes
-
-__Example__
-```node
-let config = {
-  transporters: [
-    {
-      type: Highlogger.TRANSPORTER.CONSOLE
-    }
-  ]
-};
-```
 
 
 ## Configuration
@@ -93,7 +75,6 @@ The configuration object accepts the following attributes
 attribute    | type
 ------------ | ----------
 errorHandler | `function`
-debugKeys    | `object`
 transporters | `array`
 
 
@@ -102,33 +83,6 @@ __type:__ `function`
 
 For `errorHandler` you can pass a function that should be called in case a transporter returns an error.
 The default will just throw all errors.
-
-
-### debugKeys
-__type:__ `object`
-
-`debugKeys` is expected to be an object that can two fields: `include` and `exclude`.
-Both, if present, must be an `array` of strings.
-
-`include` sets the whitelist for debug messages that should be logged, based on the messages debug key/prefix.
-`exclude` sets the blacklist for debug messages that should'nt be logged, also based on the messages debug key/prefix.
-
-An `exclude` will overwrite an `include`.
-
-Both will accept `*` as a wildcard that matches any string. It can be used at the beginning, in the middle and/or at the end of a string.
-So for example `foo*bar` would match any string that starts with `foo` and ends with `bar`.
-
-__Example__
-```node
-let config = {
-  debugKeys: {
-    include: ['foo*'],
-    exclude: ['foobar']
-  }
-};
-```
-
-In this example any debug message, whose debugKey starts with `foo`, will be logged - except `foobar`.
 
 
 ### transporters
@@ -141,8 +95,8 @@ __Example__
 ```node
 let config = {
   transporters: [
-    {type: Highlogger.TRANSPORTER.CONSOLE},
-    {type: Highlogger.TRANSPORTER.SOCKET}
+    {type: 'console'},
+    {type: 'socket'}
   ]
 };
 ```
@@ -157,10 +111,29 @@ These attributes are supported by every transporter:
 attribute    | type
 ------------ | ---------
 severity     | `object`
-json         | `boolean`
-type         | `number`
+type         | `string`
 
 Other attributes are supported depending on the transporter type.
+
+### transporter.maxMessageSize
+__type:__ `number`
+__default:__ `Infinity` for Console and `512` for Socket & Syslog
+
+The value is in bytes or characters and if a message exceeds the maxMessageSize the message will be replaced by a message like "message size exceeded".
+
+__Example__
+```node
+let config = {
+  transporters: [
+    {
+      type: 'console',
+      maxMessageSize: 1024
+    }
+  ]
+};
+```
+
+In this example any message longer than 1024 bytes would be replaced.
 
 
 ### transporter.severity
@@ -168,91 +141,74 @@ __type:__ `object`
 __default:__
 ```node
   {
-    minimum: Highlogger.SEVERITY.EMERG,
-    maximum: Highlogger.SEVERITY.DEBUG
+    minimum: 'emerg',
+    maximum: 'debug'
   }
 ```
 
 `severity` is expected to be an object that can two fields: `minimum` and `maximum`.
 These set the severity range this transporter should react on.
 
-Both fields are optional and if one is passed it must either be a `number` or constant.
+Both fields are optional and if one is passed it must be a `string`.
 Per default transporters react to any severity.
 
-Available constants are:
+Available values are:
 
-* `Highlogger.SEVERITY.EMERG`
-* `Highlogger.SEVERITY.ALERT`
-* `Highlogger.SEVERITY.CRIT`
-* `Highlogger.SEVERITY.ERROR`
-* `Highlogger.SEVERITY.WARN`
-* `Highlogger.SEVERITY.NOTICE`
-* `Highlogger.SEVERITY.INFO`
-* `Highlogger.SEVERITY.DEBUG`
+* `emerg`
+* `alert`
+* `crit`
+* `error`
+* `warn`
+* `notice`
+* `info`
+* `debug`
 
-A lower severity means a higher priority, so `EMERG` is the lowest severity while `DEBUG` is the highest.
+A lower severity means a higher priority, so `emerg` is the lowest severity while `debug` is the highest.
 
 __Example__
 ```node
 let config = {
   transporters: [
     {
-      type: Highlogger.TRANSPORTER.CONSOLE,
+      type: 'console',
       severity: {
-        minimum: Highlogger.SEVERITY.ERROR,
-        maximum: Highlogger.SEVERITY.DEBUG
+        minimum: 'error',
+        maximum: 'debug'
       }
     }
   ]
 };
 ```
 
-In this example any message lower than `ERROR` wouldn't be sent to this transporter, which means `EMERG`, `ALERT` and `CRIT` would be ignored.
-
-
-### transporter.json
-__type:__ `boolean`
-__default:__ `false`
-
-This flag determines whether or not the transporter should always log messages as stringified JSON objects.
-This doesn't change the behavior when logging objects, those become stringified JSON objects anyway.
-
-What this does is, it will wrap any non-object as a value in a simple object.
-
-__Example transporter.json=true__
-`"foobar"` would become `{"message": "foobar"}`
-
-This should only be enabled for transporters if you specifically need stringified JSON _objects_.
-(e.g. Kibana pattern)
+In this example any message lower than `error` wouldn't be sent to this transporter, which means `emerg`, `alert` and `crit` would be ignored.
 
 
 ### transporter.type
-__type:__ `number`
+__type:__ `string`
 __required__
 
 With `type` you can decide what kind of transporter you are setting up.
-This field is required and must either be a `number` or constant.
 
-Available constants are:
+Available values are:
 
-* `Highlogger.TRANSPORTER.CONSOLE`
-* `Highlogger.TRANSPORTER.SOCKET`
-* `Highlogger.TRANSPORTER.SYSLOG`
+* `console`
+* `socket`
+* `syslog`
 
 __Example__
 ```node
 let config = {
   transporters: [
     {
-      type: Highlogger.TRANSPORTER.CONSOLE
+      type: 'console'
     }
   ]
 }
 ```
 
 
-#### transporter.type CONSOLE
-The following attributes are only available when transporter `type` is set to `Highlogger.TRANSPORTER.CONSOLE`
+#### transporter.type 'console'
+The following attributes are only available when transporter `type` is set to `console`
 
 
 ##### transporter.stream
@@ -267,7 +223,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.CONSOLE,
+     type: 'console',
      stream: process.stdout
    }
  ]
@@ -287,7 +243,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.CONSOLE,
+     type: 'console',
      colors: false
    }
  ]
@@ -295,22 +251,22 @@ let config = {
 ```
 
 
-#### transporter.type SOCKET
-The following attributes are only available when transporter `type` is set to `Highlogger.TRANSPORTER.SOCKET`
+#### transporter.type 'socket'
+The following attributes are only available when transporter `type` is set to `socket`
 
 
 ##### transporter.method
 __type:__ `string`
 __required__
 
-Currently only supports `'udp4'`
+Currently only supports `udp4`
 
 __Example__
 ```node
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SOCKET,
+     type: 'socket',
      method: 'udp4'
    }
  ]
@@ -329,7 +285,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SOCKET,
+     type: 'socket',
      address: '127.0.0.1'
    }
  ]
@@ -348,7 +304,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SOCKET,
+     type: 'socket',
      port: 43002
    }
  ]
@@ -356,51 +312,50 @@ let config = {
 ```
 
 
-#### transporter.type SYSLOG
-The following attributes are only available when transporter `type` is set to `Highlogger.TRANSPORTER.SYSLOG`
+#### transporter.type 'syslog'
+The following attributes are only available when transporter `type` is set to `syslog`
 
 
 ##### transporter.facility
-__type:__ `number`
-__default:__ `Highlogger.FACILITY.USER`
+__type:__ `string`
+__default:__ `user`
 
 This can be used to set your desired facility.
-If present it must either be a `number` or constant.
 
-Available constants
+Available values
 
-* `Highlogger.FACILITY.KERN`
-* `Highlogger.FACILITY.USER`
-* `Highlogger.FACILITY.MAIL`
-* `Highlogger.FACILITY.DAEMON`
-* `Highlogger.FACILITY.AUTH`
-* `Highlogger.FACILITY.SYSLOG`
-* `Highlogger.FACILITY.LPR`
-* `Highlogger.FACILITY.NEWS`
-* `Highlogger.FACILITY.UUCP`
-* `Highlogger.FACILITY.CLOCK`
-* `Highlogger.FACILITY.SEC`
-* `Highlogger.FACILITY.FTP`
-* `Highlogger.FACILITY.NTP`
-* `Highlogger.FACILITY.AUDIT`
-* `Highlogger.FACILITY.ALERT`
-* `Highlogger.FACILITY.CLOCK2`
-* `Highlogger.FACILITY.LOCAL0`
-* `Highlogger.FACILITY.LOCAL1`
-* `Highlogger.FACILITY.LOCAL2`
-* `Highlogger.FACILITY.LOCAL3`
-* `Highlogger.FACILITY.LOCAL4`
-* `Highlogger.FACILITY.LOCAL5`
-* `Highlogger.FACILITY.LOCAL6`
-* `Highlogger.FACILITY.LOCAL7`
+* `kern`
+* `user`
+* `mail`
+* `daemon`
+* `auth`
+* `syslog`
+* `lpr`
+* `news`
+* `uucp`
+* `clock`
+* `sec`
+* `ftp`
+* `ntp`
+* `audit`
+* `alert`
+* `clock2`
+* `local0`
+* `local1`
+* `local2`
+* `local3`
+* `local4`
+* `local5`
+* `local6`
+* `local7`
 
 __Example__
 ```node
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
-     facility: Highlogger.FACILITY.LOCAL0
+     type: 'syslog',
+     facility: 'local0'
    }
  ]
 }
@@ -419,7 +374,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      hostname: 'PC-10-10-10-10'
    }
  ]
@@ -439,7 +394,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      appName: 'myNodeApplication'
    }
  ]
@@ -459,7 +414,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      processId: '83123'
    }
  ]
@@ -479,7 +434,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      timezoneOffset: 2
    }
  ]
@@ -498,7 +453,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      method: 'udp4'
    }
  ]
@@ -517,7 +472,7 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      address: '127.0.0.1'
    }
  ]
@@ -536,13 +491,39 @@ __Example__
 let config = {
  transporters: [
    {
-     type: Highlogger.TRANSPORTER.SYSLOG,
+     type: 'syslog',
      port: 514
    }
  ]
 }
 ```
 
+### transporter.json
+__type:__ `boolean`
+__default:__ `false`
+
+This flag determines whether or not the transporter should always log messages as stringified JSON objects.
+This doesn't change the behavior when logging objects, those become stringified JSON objects anyway.
+
+What this does is, it will wrap any non-object as a value in a simple object and if it's an array convert it to an object.
+
+__Example transporter.json=true__
+`"foobar"` would become `{"0": "foobar"}`
+
+This should only be enabled for transporters if you specifically need stringified JSON _objects_.
+(e.g. Kibana pattern)
+
+__Example__
+```node
+let config = {
+ transporters: [
+   {
+     type: 'syslog',
+     json: true
+   }
+ ]
+}
+```
 
 ## Singleton
 
@@ -561,86 +542,73 @@ In rare cases you might not be able to rely on node.js's built-in module caching
 
 
 ## Usage
-
 An instance of Highlogger offers logging methods for each possible severity, the only exception being `DEBUG` (see below).
 
 They can all be used with the same syntax:
 ```node
 let logger = new Highlogger();
 
-logger.warn(message, options);
+logger.warn(message0, message1, messageN);
 ```
-`message` is a required parameter (obviously), while `options` is optional.
+At least one `message` param is required (obviously) but you can log with as many message params as you want
 
+### Debug
+You can set debug keys per environment variable `DEBUG`.
+Debug keys are set by passing a comma-separated list of keys.
 
-#### options
-__`type:`__ `object`
+Only keys that are included will show and as a wildcard you can use `*`, which will match anything.
+This means `DEBUG=*` would include any key while `DEBUG=foo,bar*` would only include the key `foo` and any key starting with `bar`.
 
-This parameter is optional and currently only used by the `SYSLOG`-transporter.
+You can also exclude specific keys by prefixing them with a `-` character.
+`DEBUG=*,-foobar:*` would include all debug keys except those starting with `foobar:`.
 
-
-##### options.messageId
-__`type:`__ `string`
-__`default:`__ `'-'`
-
-This allows you to send a messageId with this message.
-This string will be filtered according to PRINTUSASCII and can only be a maximum of 32 characters (as defined in [RFC5424](https://tools.ietf.org/html/rfc5424#section-6))
-
-
-##### options.structuredData
-__`type:`__ `string`
-__`default:`__ `'-'`
-
-This allows you to send structuredData with this message.
-Currently this field is not filtered/validated in any way, so make sure to pay extra attention if you're going to use this.
-
+On Windows the environment variable is set using the set command:
+```bash
+set DEBUG=*,-not_this
+```
 
 ### Available methods
 
 
-### emerg(message, [options])
-Will pass on message and options with `Highlogger.SEVERITY.EMERG` severity to transporters.
+### emerg(message...)
+Will pass on message and options with `emerg` severity to transporters.
 
 
-### crit(message, [options])
-Will pass on message and options with `Highlogger.SEVERITY.CRIT` severity to transporters.
+### crit(message...)
+Will pass on message and options with `crit` severity to transporters.
 
 
-### error(message, [options])
-Will pass on message and options with `Highlogger.SEVERITY.ERROR` severity to transporters.
+### error(message...)
+Will pass on message and options with `error` severity to transporters.
 
 
-### warn(message, [options])
-Will pass on message and options with `Highlogger.SEVERITY.WARN` severity to transporters.
+### warn(message...)
+Will pass on message and options with `warn` severity to transporters.
 
 
-### info(message, [options])
-Will pass on message and options with `Highlogger.SEVERITY.INFO` severity to transporters.
+### info(message...)
+Will pass on message and options with `info` severity to transporters.
 
 
 ### getDebug(prefix)
 Debug gets special treatment.
 In order to use the debug-function you must first call `getDebug(prefix)` which will return a function.
-Depending on whether or not your passed `prefix` is currently included in `debugKeys` this will either return the `debug` or a dummy function.
-`debug` will work the same as the above functions, while the dummy function will just not do anything.
+Depending on whether or not your passed `prefix` is currently included in the `DEBUG` environment variable this will either return the `debug`- or a dummy-function.
+`debug` will work the same as the above functions, while a dummy function will do nothing.
 This allows you to leave all your debug logs in your project without any harm and you can just enable/disable them on a whim.
 
 __Example__
 ```node
-let logger = new Highlogger({
-  debugKeys: {
-    include: ['foobar']
-  }
-});
+let logger = new Highlogger();
 let debug = logger.getDebug('foobar');
 
 debug('this is a debug message');
 ```
-In the example this message would be logged because "foobar" is a whitelisted debug prefix/key. Otherwise it would not do anything.
+In the example this message would be logged if "foobar" is a whitelisted debug prefix/key. Otherwise it would not do anything.
 
 
-#### debug(message, [options])
-Will pass on message and options with `Highlogger.SEVERITY.DEBUG` severity to transporters.
+#### debug(message...)
+Will pass on message and options with `debug` severity to transporters.
 
 
 ## Tests
@@ -662,15 +630,12 @@ $ npm run cover
 
 ## Todo
 
-  * message limit (per transporter?)
   * remove moment dependency
-  * allow multiple message params
   * support for external transporter plugins
   * direct file logging transporter (already working by passing a filestream to console transporter)
   * unix-domain support for socket transporter
   * tcp4/6 support for socket transporter
   * udp6 support for socket transporter
-  * filter structured data on syslog transporter
 
 
 ## People

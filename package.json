@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "fast, minimalist logging module",
-  "version": "1.8.4",
+  "version": "2.0.0",
   "license": "MIT",
   "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [
@@ -16,6 +16,7 @@
   "dependencies": {
     "async": "^1.4.2",
     "chalk": "^1.1.1",
+    "circular-json": "^0.3.0",
     "moment": "^2.10.6"
   },
   "devDependencies": {

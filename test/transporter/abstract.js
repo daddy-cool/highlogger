@@ -14,25 +14,25 @@ describe('transporter abstract', function () {
     it('should set default severity', function () {
       let abstractTransporter = new AbstractTransporter({errorHandler: errorHandler});
 
-      assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.EMERG);
-      assert.equal(abstractTransporter.severity.maximum, SHARED_CONSTANTS.SEVERITY.DEBUG);
+      assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.emerg);
+      assert.equal(abstractTransporter.severity.maximum, SHARED_CONSTANTS.SEVERITY.debug);
     });
 
     it('should set custom severity', function () {
       let severity = {
-            minimum: SHARED_CONSTANTS.SEVERITY.CRIT,
-            maximum: SHARED_CONSTANTS.SEVERITY.INFO
+            minimum: 'crit',
+            maximum: 'info'
           },
           abstractTransporter = new AbstractTransporter({
             errorHandler: errorHandler,
             severity: severity
           });
 
-      assert.equal(abstractTransporter.severity.minimum, severity.minimum);
-      assert.equal(abstractTransporter.severity.maximum, severity.maximum);
+      assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.crit);
+      assert.equal(abstractTransporter.severity.maximum, SHARED_CONSTANTS.SEVERITY.info);
     });
 
-    it('should not set non-numerical severity', function () {
+    it('should set default severity on invalid parameters', function () {
       let severity = {
             minimum: 'foo',
             maximum: 'bar'
@@ -42,8 +42,8 @@ describe('transporter abstract', function () {
             severity: severity
           });
 
-      assert.notEqual(abstractTransporter.severity.minimum, severity.minimum);
-      assert.notEqual(abstractTransporter.severity.maximum, severity.maximum);
+      assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.emerg);
+      assert.equal(abstractTransporter.severity.maximum, SHARED_CONSTANTS.SEVERITY.debug);
     });
   });
 
@@ -52,7 +52,7 @@ describe('transporter abstract', function () {
       let abstractTransporter = new AbstractTransporter({errorHandler: errorHandler});
 
       abstractTransporter.write(null, null, function (err) {
-        assert.equal(err.message, 'AbstractTransporter.write method was not overwritten');
+        assert.equal(err.message, 'write not implemented');
         done();
       });
     });

@@ -82,16 +82,16 @@ describe('transporter syslog', function () {
       it('should set the default facility', function () {
         let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
 
-        assert.equal(syslogTransporter.facility, SHARED_CONSTANTS.FACILITY.USER * 8);
+        assert.equal(syslogTransporter.facility, 1 * 8);
       });
 
       it('should set a custom facility', function () {
         let syslogTransporter = new SyslogTransporter({
           errorHandler: errorHandler,
-          facility: SHARED_CONSTANTS.FACILITY.LOCAL0
+          facility: 'local0'
         });
 
-        assert.equal(syslogTransporter.facility, SHARED_CONSTANTS.FACILITY.LOCAL0 * 8);
+        assert.equal(syslogTransporter.facility, 16 * 8);
       });
 
       it('should not set a non-numerical facility', function () {
@@ -306,36 +306,11 @@ describe('transporter syslog', function () {
       });
     });
 
-    describe('filter structuredData', function () {
-      it('should set the default structuredData', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
-
-        assert.equal(syslogTransporter.filterStructuredData(), '-');
-      });
-
-      it('should set a custom structuredData', function () {
-        let structuredData = 'foobar',
-            syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
-
-        assert.equal(syslogTransporter.filterStructuredData(structuredData), structuredData);
-      });
-
-      it('should not set a non-string structuredData', function () {
-        let syslogTransporter = new SyslogTransporter({errorHandler: errorHandler});
-
-        //noinspection JSCheckFunctionSignatures
-        assert.equal(syslogTransporter.filterStructuredData(new Buffer('foobar')), '-');
-      });
-    });
-
     it('should format the message according to RFC5424 and write to socket', function (done) {
-      let facility = 10,
-          severity = 6,
+      let severity = 6,
           hostname = 'testHost',
           appName = 'testApp',
           processId = 'testProcessId',
-          messageId = 'testMessageId',
-          structuredData = 'testStructuredData',
           message = 'foobar',
           socket = dgram.createSocket('udp4');
 
@@ -346,13 +321,11 @@ describe('transporter syslog', function () {
 
       socket.on("message", function (msg) {
         let messageSplitArray = msg.toString().split(' ');
-        assert.equal(messageSplitArray[0], '<' + (facility*8+severity) + '>1');
+        assert.equal(messageSplitArray[0], '<' + (10*8+severity) + '>1');
         assert.equal(parseFormat(messageSplitArray[1]), 'YYYY-MM-DDTHH:mm:ss.SSSZ');
         assert.equal(messageSplitArray[2], hostname);
         assert.equal(messageSplitArray[3], appName);
         assert.equal(messageSplitArray[4], processId);
-        assert.equal(messageSplitArray[5], messageId);
-        assert.equal(messageSplitArray[6], structuredData);
         assert.equal(messageSplitArray[7], message);
         socket.close(done);
       });
@@ -361,16 +334,14 @@ describe('transporter syslog', function () {
         let syslogTransporter = new SyslogTransporter({
           errorHandler: errorHandler,
           port: socket.address().port,
-          facility: facility,
+          facility: 'sec',
           hostname: hostname,
           appName: appName,
           processId: processId
         });
 
         syslogTransporter.write(message, {
-          severity: severity,
-          messageId: messageId,
-          structuredData: structuredData
+          severity: severity
         }, function (err) {
           assert.ifError(err);
         });
@@ -378,8 +349,7 @@ describe('transporter syslog', function () {
     });
 
     it('should use debugKey as messageId only on debug severity', function (done) {
-      let facility = 10,
-          debugKey = 'foobarDebugKey',
+      let debugKey = 'foobarDebugKey',
           message = 'foobarMsg',
           socket = dgram.createSocket('udp4'),
           debugRequest = false,
@@ -391,7 +361,7 @@ describe('transporter syslog', function () {
         socket.close(done);
       });
 
-      function tryDone(socket) {
+      function tryDone() {
         triedDone++;
         if (triedDone === 2) {
           assert.ok(debugRequest);
@@ -404,10 +374,10 @@ describe('transporter syslog', function () {
         let messageSplitArray = msg.toString().split(' ');
         assert.equal(messageSplitArray[7], message);
 
-        if (messageSplitArray[0] === '<' + (facility*8+SHARED_CONSTANTS.SEVERITY.DEBUG) + '>1') {
+        if (messageSplitArray[0] === '<' + (10*8+SHARED_CONSTANTS.SEVERITY.debug) + '>1') {
           assert.equal(messageSplitArray[5], debugKey);
           debugRequest = true;
-        } else if (messageSplitArray[0] === '<' + (facility*8+SHARED_CONSTANTS.SEVERITY.INFO) + '>1') {
+        } else if (messageSplitArray[0] === '<' + (10*8+SHARED_CONSTANTS.SEVERITY.info) + '>1') {
           assert.equal(messageSplitArray[5], '-');
           infoRequest = true;
         } else {
@@ -421,18 +391,18 @@ describe('transporter syslog', function () {
         let syslogTransporter = new SyslogTransporter({
           errorHandler: errorHandler,
           port: socket.address().port,
-          facility: facility
+          facility: 'sec'
         });
 
         syslogTransporter.write(message, {
-          severity: SHARED_CONSTANTS.SEVERITY.DEBUG,
+          severity: SHARED_CONSTANTS.SEVERITY.debug,
           debugKey: debugKey
         }, function (err) {
           assert.ifError(err);
         });
 
         syslogTransporter.write(message, {
-          severity: SHARED_CONSTANTS.SEVERITY.INFO,
+          severity: SHARED_CONSTANTS.SEVERITY.info,
           debugKey: debugKey
         }, function (err) {
           assert.ifError(err);

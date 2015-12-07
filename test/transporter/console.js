@@ -75,9 +75,9 @@ describe('transporter console', function () {
             assert.ifError(err);
           };
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.EMERG}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.CRIT}, errorCallback);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.ERROR}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.emerg}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.crit}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.error}, errorCallback);
     });
 
     it('should write warning severity to output with yellow color', function (done) {
@@ -97,7 +97,7 @@ describe('transporter console', function () {
             assert.ifError(err);
           };
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.WARN}, errorCallback);
+      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.warn}, errorCallback);
     });
 
     it('should write notice/info/debug severity to output without color', function (done) {
@@ -151,7 +151,7 @@ describe('transporter console', function () {
 
         consoleTransporter.write(message, {
           debugKey: debugKey,
-          severity: SHARED_CONSTANTS.SEVERITY.DEBUG
+          severity: SHARED_CONSTANTS.SEVERITY.debug
         }, errorCallback);
       });
 
@@ -175,7 +175,7 @@ describe('transporter console', function () {
 
         consoleTransporter.write(message, {
           debugKey: debugKey,
-          severity: SHARED_CONSTANTS.SEVERITY.INFO
+          severity: SHARED_CONSTANTS.SEVERITY.info
         }, errorCallback);
       });
 
@@ -234,14 +234,14 @@ describe('transporter console', function () {
         for (let t in tests) {
           consoleTransporter.write(t, {
             debugKey: tests[t].key,
-            severity: SHARED_CONSTANTS.SEVERITY.DEBUG
+            severity: SHARED_CONSTANTS.SEVERITY.debug
           }, errorCallback);
         }
 
         for (let t in tests) {
           consoleTransporter.write(t, {
             debugKey: tests[t].key,
-            severity: SHARED_CONSTANTS.SEVERITY.DEBUG
+            severity: SHARED_CONSTANTS.SEVERITY.debug
           }, errorCallback);
         }
       });

@@ -11,17 +11,23 @@ $ npm install highlogger
 
 ## Features
 
-  * logging to multiple transporters at once
-  * multiple transporters
-    * console, accepts any writable stream but will default to `process.stdout`
-    * dgram socket, supporting udp4 for now
-    * syslog, with complete support for [RFC5424](https://tools.ietf.org/html/rfc5424) (only via udp4 for now)
-  * set different severity ranges per transporter, transporter will only log messages within their severity range
-  * debug prefixes/keys
+* logging to multiple transporters at once
+* multiple transporters
+    * console
+        * accepts any writable stream but will default to `process.stdout`
+    * dgram socket
+        * supporting only udp4 for now
+
+    * syslog, supporting [RFC5424](https://tools.ietf.org/html/rfc5424)
+        * only via udp4 for now
+        * doesn't support structuredData
+        * messageId only used for debug keys
+* set different severity ranges per transporter, transporter will only log messages within their severity range
+* debug prefixes/keys
     * white- and blacklisting for debug messages based on their prefix/key
-  * colors for console/streams
-  * optional singleton use to retain configuration across a whole project
-  * max message length per transporter
+* colors for console/streams
+* optional singleton use to retain configuration across a whole project
+* max message length per transporter
 
 
 ## Quick Start

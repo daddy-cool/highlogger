@@ -46,13 +46,11 @@ describe('Highlogger', function () {
       });
 
       it('should set a custom transporters', function () {
-        let highLogger = new Highlogger({
-          transporters: [
-            {type: 'console'},
-            {type: 'syslog'},
-            {type: 'socket', port: 0, address: '127.0.0.1', method: 'udp4'}
-          ]
-        });
+        let highLogger = new Highlogger([
+          {type: 'console'},
+          {type: 'syslog'},
+          {type: 'socket', port: 0, address: '127.0.0.1', method: 'udp4'}
+        ]);
 
         assert.equal(highLogger.transporters.length, 3);
         assert.ok(highLogger.transporters[0] instanceof SocketTransporter);
@@ -61,12 +59,8 @@ describe('Highlogger', function () {
       });
 
       it('should skip invalid transporter config', function () {
-        let highLogger = new Highlogger({
-              transporters: [1, 2]
-            }),
-            highLogger2 = new Highlogger({
-              transporters: [1, 2, {type: 'console'}]
-            });
+        let highLogger = new Highlogger([1, 2]),
+            highLogger2 = new Highlogger([1, 2, {type: 'console'}]);
 
         assert.equal(highLogger.transporters.length, 0);
         assert.equal(highLogger2.transporters.length, 1);
@@ -74,7 +68,7 @@ describe('Highlogger', function () {
 
       it('should call errorHandler on unsupported transporterType', function () {
         function invalidTransporter () {
-          new Highlogger({transporters: [{type: -1}]});
+          new Highlogger([{type: -1}]);
         }
 
         assert.throws(invalidTransporter);
@@ -179,12 +173,10 @@ describe('Highlogger', function () {
 
       tests.forEach(function (test) {
         it('should log ' + test[0], function (done) {
-          let highLogger = new Highlogger({
-                transporters: [
-                  {type: 'syslog', port: port, facility: facilityName},
-                  {type: 'syslog', port: port2, facility: facilityName}
-                ]
-              }),
+          let highLogger = new Highlogger([
+                {type: 'syslog', port: port, facility: facilityName},
+                {type: 'syslog', port: port2, facility: facilityName}
+              ]),
               doneCount = 0;
 
           function doneWait () {
@@ -213,30 +205,28 @@ describe('Highlogger', function () {
       });
 
       it('should only log on transporters with matching severity range', function (done) {
-        let highLogger = new Highlogger({
-              transporters: [
-                  {
-                    type: 'socket',
-                    port: port,
-                    severity: {
-                      minimum: 'emerg',
-                      maximum: 'emerg'
-                    },
-                    address: '127.0.0.1',
-                    method: 'udp4'
-                  },
-                  {
-                    type: 'socket',
-                    port: port2,
-                    severity: {
-                      minimum: 'info',
-                      maximum: 'info'
-                    },
-                    address: '127.0.0.1',
-                    method: 'udp4'
-                  }
-              ]
-            }),
+        let highLogger = new Highlogger([
+            {
+              type: 'socket',
+              port: port,
+              severity: {
+                minimum: 'emerg',
+                maximum: 'emerg'
+              },
+              address: '127.0.0.1',
+              method: 'udp4'
+            },
+            {
+              type: 'socket',
+              port: port2,
+              severity: {
+                minimum: 'info',
+                maximum: 'info'
+              },
+              address: '127.0.0.1',
+              method: 'udp4'
+            }
+            ]),
             doneCount = 0;
 
         function doneWait () {
@@ -283,9 +273,7 @@ describe('Highlogger', function () {
       });
 
       it('should wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger({
-              transporters: [{type: 'syslog', port: port, json: true}]
-            }),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
             message = 'foobar';
 
         socket.on("message", function (msg) {
@@ -298,9 +286,7 @@ describe('Highlogger', function () {
       });
 
       it('should not wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger({
-              transporters: [{type: 'syslog', port: port, json: false}]
-            }),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false}]),
             message = 'foobar';
 
         socket.on("message", function (msg) {
@@ -313,9 +299,7 @@ describe('Highlogger', function () {
       });
 
       it('should not wrap stringified objects inside curly braces', function (done) {
-        let highLogger = new Highlogger({
-              transporters: [{type: 'syslog', port: port, json: true}]
-            }),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
             message = {foobar: 'foobar'};
 
         socket.on("message", function (msg) {
@@ -381,9 +365,7 @@ describe('Highlogger', function () {
         });
 
         socket.bind(null, function () {
-          let highLogger =  new Highlogger({
-                transporters: [{type: 'syslog', port: socket.address().port, facility: 'sec'}]
-              }),
+          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec'}]),
               debugFn = highLogger.getDebug(debugKey);
 
           debugFn('message');

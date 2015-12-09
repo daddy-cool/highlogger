@@ -39,7 +39,7 @@ It will work without any configuration but won't offer much besides the default 
 
 ## Setup
 Highlogger needs to be instanced at least once before you can use it.
-It will accept an object as parameter for configuration.
+It will accept an array as parameter for configuration.
 
 ```node
 let logger = new Highlogger(config);
@@ -47,41 +47,26 @@ let logger = new Highlogger(config);
 
 __Default Configuration__
 ```node
-let config = {
-  transporters: [{
-    type: 'console'
-  }]
-};
+let config = [{
+  type: 'console'
+}];
 ```
 
-Per default Highlogger will just log to console (`process.stdout`), won't show any debug messages and will throw all errors.
-You can overwrite any of these fields simply by passing the matching attribute in the config object.
+Per default Highlogger will just log to console (`process.stdout`) and won't show any debug messages.
 
 
 ## Configuration
-__type:__ `object`
-
-The configuration object accepts the following attributes
-
-attribute    | type
------------- | ----------
-transporters | `array`
-
-
-### transporters
 __type:__ `array`
 
-`transporters` is expected to be an array of transporter configurations.
+The configuration array is expected to be an array of transporter configurations.
 The default is a single console transporter.
 
 __Example__
 ```node
-let config = {
-  transporters: [
-    {type: 'console'},
-    {type: 'socket'}
-  ]
-};
+let config = [
+  {type: 'console'},
+  {type: 'socket'}
+];
 ```
 
 
@@ -106,14 +91,12 @@ The value is in bytes or characters and if a message exceeds the maxMessageSize 
 
 __Example__
 ```node
-let config = {
-  transporters: [
-    {
-      type: 'console',
-      maxMessageSize: 1024
-    }
-  ]
-};
+let config = [
+  {
+    type: 'console',
+    maxMessageSize: 1024
+  }
+];
 ```
 
 In this example any message longer than 1024 bytes would be replaced.
@@ -150,17 +133,15 @@ A lower severity means a higher priority, so `emerg` is the lowest severity whil
 
 __Example__
 ```node
-let config = {
-  transporters: [
-    {
-      type: 'console',
-      severity: {
-        minimum: 'error',
-        maximum: 'debug'
-      }
+let config = [
+  {
+    type: 'console',
+    severity: {
+      minimum: 'error',
+      maximum: 'debug'
     }
-  ]
-};
+  }
+];
 ```
 
 In this example any message lower than `error` wouldn't be sent to this transporter, which means `emerg`, `alert` and `crit` would be ignored.
@@ -180,13 +161,9 @@ Available values are:
 
 __Example__
 ```node
-let config = {
-  transporters: [
-    {
-      type: 'console'
-    }
-  ]
-}
+let config = [
+  {type: 'console'}
+];
 ```
 
 
@@ -203,14 +180,12 @@ Defaults to your node.js console (`process.stdout`) but should support any writa
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'console',
-     stream: process.stdout
-   }
- ]
-}
+let config = [
+ {
+   type: 'console',
+   stream: process.stdout
+ }
+];
 ```
 
 
@@ -223,14 +198,12 @@ Disable this if your `stream` doesn't support colors.
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'console',
-     colors: false
-   }
- ]
-}
+let config = [
+ {
+   type: 'console',
+   colors: false
+ }
+];
 ```
 
 
@@ -246,14 +219,12 @@ Currently only supports `udp4`
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'socket',
-     method: 'udp4'
-   }
- ]
-}
+let config = [
+ {
+   type: 'socket',
+   method: 'udp4'
+ }
+];
 ```
 
 
@@ -265,14 +236,12 @@ Expects the target IP/URL for sending messages.
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'socket',
-     address: '127.0.0.1'
-   }
- ]
-}
+let config = [
+ {
+   type: 'socket',
+   address: '127.0.0.1'
+ }
+];
 ```
 
 
@@ -284,14 +253,12 @@ Expects the target port for sending messages.
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'socket',
-     port: 43002
-   }
- ]
-}
+let config = [
+ {
+   type: 'socket',
+   port: 43002
+ }
+];
 ```
 
 
@@ -334,14 +301,12 @@ Available values
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     facility: 'local0'
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   facility: 'local0'
+ }
+];
 ```
 
 
@@ -354,14 +319,12 @@ This string will be filtered according to PRINTUSASCII and can only be a maximum
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     hostname: 'PC-10-10-10-10'
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   hostname: 'PC-10-10-10-10'
+ }
+];
 ```
 
 
@@ -374,14 +337,12 @@ This string will be filtered according to PRINTUSASCII and can only be a maximum
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     appName: 'myNodeApplication'
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   appName: 'myNodeApplication'
+ }
+];
 ```
 
 
@@ -394,14 +355,12 @@ This string will be filtered according to PRINTUSASCII and can only be a maximum
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     processId: '83123'
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   processId: '83123'
+ }
+];
 ```
 
 
@@ -414,14 +373,12 @@ The offset must be from UTC time and in hours, only -16 to 16 are allowed.
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     timezoneOffset: 2
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   timezoneOffset: 2
+ }
+];
 ```
 
 
@@ -433,14 +390,12 @@ Currently only supports `'udp4'`
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     method: 'udp4'
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   method: 'udp4'
+ }
+];
 ```
 
 
@@ -452,14 +407,12 @@ Expects the target IP/URL for sending messages.
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     address: '127.0.0.1'
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   address: '127.0.0.1'
+ }
+];
 ```
 
 
@@ -471,14 +424,12 @@ Expects the target port for sending messages.
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     port: 514
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   port: 514
+ }
+];
 ```
 
 ### transporter.json
@@ -498,14 +449,12 @@ This should only be enabled for transporters if you specifically need stringifie
 
 __Example__
 ```node
-let config = {
- transporters: [
-   {
-     type: 'syslog',
-     json: true
-   }
- ]
-}
+let config = [
+ {
+   type: 'syslog',
+   json: true
+ }
+];
 ```
 
 ## Singleton

@@ -12,4 +12,4 @@ sudo: false
 
 script: "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- --recursive -R spec"
 
-after_success: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+after_script: "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"

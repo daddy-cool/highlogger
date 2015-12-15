@@ -1,0 +1,11 @@
+language: node_js
+
+node_js:
+  - "4.0.X"
+  - "4.1.X"
+  - "4.2.X"
+  - "5.0.X"
+  - "5.1.X"
+  - "5.2.X"
+
+sudo: false

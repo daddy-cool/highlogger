@@ -2,6 +2,7 @@
 test
 .eslintrc
 .gitignore
+.travis.yml
 
 # IntelliJ project files
 .idea

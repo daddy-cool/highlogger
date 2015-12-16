@@ -59,13 +59,13 @@ let config = [
 ];
 ```
 
-__Config values supported by every transporter__
+__Config values supported by every transporter:__
 
-| attribute | type |
-| - | - |
-| maxMessageSize | `number` |
-| severity | `object` |
-| type | `string` |
+First attribute  | type
+------------- | -------------
+maxMessageSize  | `number`
+severity  | `object`
+type  | `string`
 
 Other config values depend on the transporter type.
 
@@ -98,9 +98,7 @@ Both fields are optional and if one is passed it must be a `string`.
 Per default transporters react to any severity.
 
 __Available severities:__
-
-| - | - | - | - | - | - | - | - |
-| `emerg` | `alert` | `crit` | `error` | `warn` | `notice` | `info` | `debug` |
+`emerg` • `alert` • `crit` • `error` • `warn` • `notice` • `info` • `debug`
 
 A lower severity means a higher priority, so `emerg` is the lowest severity while `debug` is the highest.
 
@@ -124,9 +122,7 @@ __type:__ `string`
 __required__
 
 __Available types:__
-
-| - | - | - |
-| `console` | `socket` | `syslog` |
+`console` • `socket` • `syslog`
 
 __Example__
 ```node
@@ -228,11 +224,7 @@ __type:__ `string`
 __default:__ `'user'`
 
 __Available facilities:__
-
-| - | - | - | - | - | - | - | - |
-| `kern` | `user` | `mail` | `daemon` | `auth` | `syslog` | `lpr` | `news` |
-| `uucp` | `clock` | `sec` | `ftp` | `ntp` | `audit` | `alert` | `clock2` |
-| `local0` | `local1` | `local2` | `local3` | `local4` | `local5` | `local6` | `local7` |
+`kern` • `user` • `mail` • `daemon` • `auth` • `syslog` • `lpr` • `news` • `uucp` • `clock` • `sec` • `ftp` • `ntp` • `audit` • `alert` • `clock2` • `local0` • `local1` • `local2` • `local3` • `local4` • `local5` • `local6` • `local7`
 
 __Example__
 ```node

@@ -59,8 +59,12 @@ describe('stringify', function () {
     assert.equal(stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 31), '{\"msg\":\"{\\\"0\\\":{\\\"foo\\\":\\\"bar\"}');
   });
 
+  it('should return an empty object if maxlength is set to zero', function () {
+    assert.equal(stringify('foobar', true, 0), "{\"msg\":\"\"}");
+  });
+
   it('should return a timeout message after certain time has passed', function () {
-    assert.equal(stringify('foobar', true, 0), "{\"msg\":\"stringify timeout after 100ms\"}");
+    assert.equal(stringify('foobar', true, 1), "{\"msg\":\"stringify timeout after 100ms\"}");
   });
 
 });

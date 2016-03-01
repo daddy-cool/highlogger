@@ -113,6 +113,7 @@ describe('Highlogger', function () {
   });
 
   describe('log', function () {
+
     describe('severity types', function () {
       let facilityName = 'sec',
           facility = 10,
@@ -249,6 +250,29 @@ describe('Highlogger', function () {
         highLogger.emerg(message+'emerg');
         highLogger.info(message+'info');
       });
+
+      it('should not log empty messages', function (done) {
+        let highLogger = new Highlogger([
+            {
+              type: 'socket',
+              port: port,
+              severity: {
+                minimum: 'emerg',
+                maximum: 'emerg'
+              },
+              address: '127.0.0.1',
+              method: 'udp4'
+            }
+        ]);
+
+        socket.on("message", function () {
+          assert.fail("this should not happen");
+        });
+
+        setTimeout(done, 100);
+
+        highLogger.emerg();
+      });
     });
 
     describe('json', function () {
@@ -278,7 +302,7 @@ describe('Highlogger', function () {
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], '{"0":"' + message + '"}');
+          assert.equal(messageSplitArray[7], '{"msg":"' + message + '"}');
           done();
         });
 
@@ -322,7 +346,11 @@ describe('Highlogger', function () {
         process.env.DEBUG = 'bar';
         highLogger2 = new Highlogger();
 
+        assert.equal(typeof highLogger.getDebug(), 'function');
         assert.equal(highLogger.getDebug().name, 'missingDebugKey');
+        assert.equal(highLogger.getDebug()(), undefined);
+        assert.equal(typeof highLogger.getDebug('foo'), 'function');
+        assert.equal(highLogger.getDebug('foo')(), undefined);
         assert.equal(highLogger2.getDebug('foo').name, 'notIncludedDebug');
 
         process.env.DEBUG = debug;
@@ -335,8 +363,9 @@ describe('Highlogger', function () {
         process.env.DEBUG = '*, -foo*';
         highLogger = new Highlogger();
 
+        assert.equal(typeof highLogger.getDebug('foo'), 'function');
         assert.equal(highLogger.getDebug('foo').name, 'excludedDebug');
-
+        assert.equal(highLogger.getDebug('foo')(), undefined);
         process.env.DEBUG = debug;
       });
 
@@ -347,8 +376,12 @@ describe('Highlogger', function () {
         process.env.DEBUG = '*bar*, -*foo*';
         highLogger = new Highlogger();
 
+        assert.equal(typeof highLogger.getDebug('ffffbar'), 'function');
         assert.equal(highLogger.getDebug('ffffbar').name, 'debug');
+        assert.equal(highLogger.getDebug('ffffbar')(), undefined);
+        assert.equal(typeof highLogger.getDebug('barfoobar'), 'function');
         assert.equal(highLogger.getDebug('barfoobar').name, 'excludedDebug');
+        assert.equal(highLogger.getDebug('barfoobar')(), undefined);
 
         process.env.DEBUG = debug;
       });

@@ -42,7 +42,7 @@ describe('stringify', function () {
     let obj = {a: 'foo'};
     obj.b = obj;
 
-    assert.equal('{"a":"foo","b":"~"}', stringify(obj, false, Infinity));
+    assert.equal(stringify(obj, false, Infinity), '{"a":"foo","b":"~"}');
   });
 
   it('should stringify arrays as object when json=true and just stringify otherwise', function () {
@@ -52,9 +52,15 @@ describe('stringify', function () {
     assert.equal(stringify(arr, false, Infinity), '["1","a","c"]');
   });
 
-  it('should change message if exceeding limit', function () {
-    assert.equal(stringify('foobar', true, 0), '{"0":"message exceeds size limit of transporter"}');
-    assert.equal(stringify('foobar', false, 0), 'message exceeds size limit of transporter');
+  it('should shorten message if exceeding limit', function () {
+    assert.equal(stringify('foobar', true, 13), '{"msg":"foo"}');
+    assert.equal(stringify('foobar', false, 3), 'foo');
+    assert.equal(stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 37), '{"0":{"foo":"bar"},"1":{"bar":"foo"}}');
+    assert.equal(stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 31), '{\"msg\":\"{\\\"0\\\":{\\\"foo\\\":\\\"bar\"}');
+  });
+
+  it('should return a timeout message after certain time has passed', function () {
+    assert.equal(stringify('foobar', true, 0), "{\"msg\":\"stringify timeout after 100ms\"}");
   });
 
 });

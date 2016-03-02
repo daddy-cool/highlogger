@@ -1,6 +1,7 @@
 'use strict';
 
 let stringify = require('../lib/stringify'),
+    fs = require('fs'),
     assert = require('assert');
 
 describe('stringify', function () {
@@ -65,6 +66,19 @@ describe('stringify', function () {
 
   it('should return a timeout message after certain time has passed', function () {
     assert.equal(stringify('foobar', true, 1), "{\"msg\":\"stringify timeout after 100ms\"}");
+  });
+
+  it('should not take longer than the timeout to cut a very long message with wrapping as JSON', function (done) {
+    fs.readFile('./test/big-file.json', 'utf8', function (err, file) {
+      assert.equal(err, null, 'could not read big-file.json');
+
+      assert.equal(stringify(
+        JSON.parse(file), true, 30),
+        "{\"msg\":\"{\\\"0\\\":{\\\"_id\\\":\\\"56\"}",
+        'timeout or response malformed'
+      );
+      done();
+    });
   });
 
 });

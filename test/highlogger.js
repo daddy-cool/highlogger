@@ -129,7 +129,8 @@ describe('Highlogger', function () {
             ['error', 3],
             ['warn', 4],
             ['notice', 5],
-            ['info', 6]
+            ['info', 6],
+            ['debug', 7]
           ];
 
       beforeEach(function (done) {
@@ -351,7 +352,7 @@ describe('Highlogger', function () {
         assert.equal(highLogger.getDebug()(), undefined);
         assert.equal(typeof highLogger.getDebug('foo'), 'function');
         assert.equal(highLogger.getDebug('foo')(), undefined);
-        assert.equal(highLogger2.getDebug('foo').name, 'notIncludedDebug');
+        assert.equal(highLogger2.getDebug('foo').name, 'notIncludedDebugKey');
 
         process.env.DEBUG = debug;
       });
@@ -364,7 +365,7 @@ describe('Highlogger', function () {
         highLogger = new Highlogger();
 
         assert.equal(typeof highLogger.getDebug('foo'), 'function');
-        assert.equal(highLogger.getDebug('foo').name, 'excludedDebug');
+        assert.equal(highLogger.getDebug('foo').name, 'excludedDebugKey');
         assert.equal(highLogger.getDebug('foo')(), undefined);
         process.env.DEBUG = debug;
       });
@@ -377,10 +378,10 @@ describe('Highlogger', function () {
         highLogger = new Highlogger();
 
         assert.equal(typeof highLogger.getDebug('ffffbar'), 'function');
-        assert.equal(highLogger.getDebug('ffffbar').name, 'debug');
+        assert.equal(highLogger.getDebug('ffffbar').name, 'debugWithKey');
         assert.equal(highLogger.getDebug('ffffbar')(), undefined);
         assert.equal(typeof highLogger.getDebug('barfoobar'), 'function');
-        assert.equal(highLogger.getDebug('barfoobar').name, 'excludedDebug');
+        assert.equal(highLogger.getDebug('barfoobar').name, 'excludedDebugKey');
         assert.equal(highLogger.getDebug('barfoobar')(), undefined);
 
         process.env.DEBUG = debug;

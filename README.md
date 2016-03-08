@@ -15,8 +15,8 @@ $ npm install highlogger
     * syslog, supporting [RFC5424](https://tools.ietf.org/html/rfc5424) (only udp4, structuredData not supported, messageId only for debug)
 * log to multiple transporters at once
 * set different severity ranges per transporter, transporter will only log messages within their severity range
-* debug prefixes/keys
-    * white- and blacklisting for debug messages based on their prefix/key
+* debug environment variable
+    * white- and blacklisting for debug messages based on their debug key
 * can be used as singleton
 * configurable maximum message length per transporter
 
@@ -384,7 +384,7 @@ In rare cases you might not be able to rely on node.js's built-in module caching
 In those cases you either need to inject/pass your instance of Highlogger, use a service locator or create a new instance of Highlogger each time.
 
 ## Usage
-Highlogger's instances offer logging methods for each supported severity, the only exception being `debug()` (see `getDebug(prefix)`).
+Highlogger's instances offer logging methods for each supported severity.
 
 __Example__
 ```node
@@ -426,12 +426,13 @@ Accepts multiple parameters of any type and will pass them on with `warn` severi
 ##### info(message...)
 Accepts multiple parameters of any type and will pass them on with `info` severity to transporters.
 
-##### getDebug(prefix)
-Accepts a single parameter `prefix` which must be a string.
+##### debug(message...)
+Accepts multiple parameters of any type and will pass them on with `debug` severity to transporters.
 
-In order to use the debug-severity you must first call `getDebug()` with a prefix as parameter. `getDebug()` will return a function.
-Depending on whether or not the passed `prefix` is currently included (and not excluded) in the `DEBUG` environment variable this will either return the `debug`- or a dummy-function.
-`debug()` will work the same as the methods for other severities, though a dummy function will literally do nothing.
+##### getDebug(debugKey)
+Accepts a single parameter `debugKey` which must be a string.
+Will return a function and depending on whether or not the passed `debugKey` is currently included in the `DEBUG` environment variable this will either return a `debug`-function or an empty function.
+`getDebug(debugKey)()` will work the same as the regular `debug`-function except add the debugKey as e.g. a message prefix (works different depending on the transporter).
 
 __Example__
 ```node
@@ -440,7 +441,7 @@ let debug = logger.getDebug('foobar');
 
 debug('this is a debug message');
 ```
-In the example this message would only be logged if "foobar" is a included debug prefix/key.
+In the example this message would only be logged if "foobar" is a included debug key.
 
 ###### debug(message...)
 Accepts multiple parameters of any type and will pass them on with `debug` severity to transporters.

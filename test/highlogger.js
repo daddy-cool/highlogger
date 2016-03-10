@@ -303,7 +303,7 @@ describe('Highlogger', function () {
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], '{"msg":"' + message + '"}');
+          assert.equal(messageSplitArray[7], '{"message":"' + message + '"}');
           done();
         });
 

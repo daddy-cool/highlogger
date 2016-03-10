@@ -33,7 +33,6 @@ describe('transporter syslog', function () {
       });
 
       it('should not set a non-string address', function () {
-        //noinspection JSCheckFunctionSignatures
         let syslogTransporter = new SyslogTransporter({address: 123});
 
         assert.equal(syslogTransporter.address, '127.0.0.1');
@@ -54,7 +53,6 @@ describe('transporter syslog', function () {
       });
 
       it('should not set a non-numerical port', function () {
-        //noinspection JSCheckFunctionSignatures
         let syslogTransporter = new SyslogTransporter({port: '123'});
 
         assert.equal(syslogTransporter.port, 514);
@@ -246,7 +244,7 @@ describe('transporter syslog', function () {
       it('should set custom json', function () {
         let syslogTransporter = new SyslogTransporter({json: true});
 
-        assert.equal(syslogTransporter.json, true);
+        assert.equal(syslogTransporter.syslogJson, true);
       });
 
       it('should not set non-boolean json', function () {
@@ -257,7 +255,6 @@ describe('transporter syslog', function () {
     });
 
     describe('set timezone offset', function () {
-      //noinspection JSUnresolvedFunction
       let timezoneOffsetTests = [
         ['should set default timezone to local timezone', undefined, moment().utcOffset()],
         ['should set custom timezone', 0, 0],

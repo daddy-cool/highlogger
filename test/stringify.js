@@ -54,18 +54,18 @@ describe('stringify', function () {
   });
 
   it('should shorten message if exceeding limit', function () {
-    assert.equal(stringify('foobar', true, 13), '{"msg":"foo"}');
+    assert.equal(stringify('foobar', true, 17), '{"message":"foo"}');
     assert.equal(stringify('foobar', false, 3), 'foo');
     assert.equal(stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 37), '{"0":{"foo":"bar"},"1":{"bar":"foo"}}');
-    assert.equal(stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 31), '{\"msg\":\"{\\\"0\\\":{\\\"foo\\\":\\\"bar\"}');
+    assert.equal(stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 35), '{\"message\":\"{\\\"0\\\":{\\\"foo\\\":\\\"bar\"}');
   });
 
   it('should return an empty object if maxlength is set to zero', function () {
-    assert.equal(stringify('foobar', true, 0), "{\"msg\":\"\"}");
+    assert.equal(stringify('foobar', true, 0), "{\"message\":\"\"}");
   });
 
   it('should return a timeout message after certain time has passed', function () {
-    assert.equal(stringify('foobar', true, 1), "{\"msg\":\"stringify timeout after 100ms\"}");
+    assert.equal(stringify('foobar', true, 1), "{\"message\":\"stringify timeout after 100ms\"}");
   });
 
   it('should not take longer than the timeout to cut a very long message with wrapping as JSON', function (done) {
@@ -73,8 +73,8 @@ describe('stringify', function () {
       assert.equal(err, null, 'could not read big-file.json');
 
       assert.equal(stringify(
-        JSON.parse(file), true, 30),
-        "{\"msg\":\"{\\\"0\\\":{\\\"_id\\\":\\\"56\"}",
+        JSON.parse(file), true, 34),
+        "{\"message\":\"{\\\"0\\\":{\\\"_id\\\":\\\"56\"}",
         'timeout or response malformed'
       );
       done();

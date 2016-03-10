@@ -65,6 +65,8 @@ First attribute  | type
 ------------- | -------------
 maxMessageSize  | `number`
 severity  | `object`
+stringifyJsonTimeout | `number`
+stringifyJsonDefaultField | `string`
 type  | `string`
 
 Other config values depend on the transporter type.
@@ -116,6 +118,60 @@ let config = [
 ```
 
 In this example only messages with a priority lower or equal to `error` would be sent to this transporter - `emerg`, `alert` and `crit` would be ignored.
+
+
+
+##### transporter.json
+__type:__ `boolean`
+__default:__ `false`
+
+If enabled will wrap every message in curly braces as valid JSON.
+So `"foobar"` would become `{"0": "foobar"}`
+
+Should only be enabled if you specifically need your messages to be wrapped (e.g. for Kibana)
+
+__Example__
+```node
+let config = [
+ {
+   type: 'syslog',
+   json: true
+ }
+];
+```
+
+### transporter.jsonTimeout
+__type:__ `number`
+__default:__ `100`
+
+The maximum amount if time in milliseconds that is allowed to shrink a message into a wrapped json.
+Works only if transporter.json is enabled.
+
+__Example__
+```node
+let config = [
+  {
+    type: 'console',
+    jsonTimeout: 200
+  }
+];
+```
+
+### transporter.jsonDefaultField
+__type:__ `String`
+__default:__ `message`
+
+The default key any message will be wrapped in if transporter.json is enabled.
+
+__Example__
+```node
+let config = [
+  {
+    type: 'console',
+    jsonDefaultField: 'msg'
+  }
+];
+```
 
 ### transporter.type
 __type:__ `string`
@@ -345,25 +401,6 @@ let config = [
  {
    type: 'syslog',
    port: 514
- }
-];
-```
-
-##### transporter.json
-__type:__ `boolean`
-__default:__ `false`
-
-If enabled will wrap every message in curly braces as valid JSON.
-So `"foobar"` would become `{"0": "foobar"}`
-
-Should only be enabled if you specifically need your messages to be wrapped (e.g. for Kibana)
-
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   json: true
  }
 ];
 ```

@@ -159,7 +159,7 @@ let config = [
 
 ### transporter.jsonDefaultField
 __type:__ `String`
-__default:__ `0`
+__default:__ `message`
 
 The default key any message will be wrapped in if transporter.json is enabled.
 
@@ -168,7 +168,7 @@ __Example__
 let config = [
   {
     type: 'console',
-    jsonDefaultField: 'message'
+    jsonDefaultField: 'msg'
   }
 ];
 ```

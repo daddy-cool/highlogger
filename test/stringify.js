@@ -55,14 +55,14 @@ describe('stringify', function () {
   });
 
   it('should shorten message if exceeding limit', function () {
-    assert.equal(stringify.stringify('foobar', true, 11), '{"0":"foo"}');
+    assert.equal(stringify.stringify('foobar', true, 17), '{"message":"foo"}');
     assert.equal(stringify.stringify('foobar', false, 3), 'foo');
     assert.equal(stringify.stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 37), '{"0":{"foo":"bar"},"1":{"bar":"foo"}}');
-    assert.equal(stringify.stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 29), '{\"0\":\"{\\\"0\\\":{\\\"foo\\\":\\\"bar\"}');
+    assert.equal(stringify.stringify({0:{foo:"bar"}, 1:{bar:"foo"}}, true, 35), '{\"message\":\"{\\\"0\\\":{\\\"foo\\\":\\\"bar\"}');
   });
 
   it('should return an empty object if maxlength is set to zero', function () {
-    assert.equal(stringify.stringify('foobar', true, 0), "{\"0\":\"\"}");
+    assert.equal(stringify.stringify('foobar', true, 0), "{\"message\":\"\"}");
   });
 
   it('should return with custom default field if json is set to true', function () {
@@ -74,7 +74,7 @@ describe('stringify', function () {
   it('should return a timeout message after certain time has passed', function () {
     let timeout = 500,
         stringify2 = new Stringify({jsonTimeout: timeout});
-    assert.equal(stringify2.stringify('foobar', true, 1), "{\"0\":\"stringify timeout after " + timeout + "ms\"}");
+    assert.equal(stringify2.stringify('foobar', true, 1), "{\"message\":\"stringify timeout after " + timeout + "ms\"}");
   });
 
   it('should not take longer than the timeout to cut a very long message with wrapping as JSON', function (done) {
@@ -82,8 +82,8 @@ describe('stringify', function () {
       assert.equal(err, null, 'could not read big-file.json');
 
       assert.equal(stringify.stringify(
-        JSON.parse(file), true, 28),
-        "{\"0\":\"{\\\"0\\\":{\\\"_id\\\":\\\"56\"}",
+        JSON.parse(file), true, 34),
+        "{\"message\":\"{\\\"0\\\":{\\\"_id\\\":\\\"56\"}",
         'timeout or response malformed'
       );
       done();

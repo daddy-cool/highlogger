@@ -65,6 +65,7 @@ First attribute  | type
 ------------- | -------------
 maxMessageSize  | `number`
 severity  | `object`
+json | `boolean`
 stringifyJsonTimeout | `number`
 stringifyJsonDefaultField | `string`
 type  | `string`
@@ -118,8 +119,6 @@ let config = [
 ```
 
 In this example only messages with a priority lower or equal to `error` would be sent to this transporter - `emerg`, `alert` and `crit` would be ignored.
-
-
 
 ##### transporter.json
 __type:__ `boolean`

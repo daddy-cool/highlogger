@@ -3,12 +3,9 @@
 let AbstractTransporter = require('./abstract'),
     nodeConsole = console,
     chalk = require('chalk'),
-    textColors = ['green', 'blue', 'magenta', 'cyan'],
+    textColors = ['green', 'blue', 'magenta', 'cyan', 'yellow', 'red', 'bgRed', 'bgGreen', 'bgYellow', 'bgBlue', 'bgMagenta', 'bgCyan'],
     error = require('../helpers/error'),
     constants = require('../helpers/constants');
-
-const SPACE = ' ';
-const EMPTY = '';
 
 /**
  * @namespace Transporters
@@ -26,48 +23,34 @@ class Console extends AbstractTransporter {
     super(config);
 
     //noinspection JSUnresolvedFunction
-    this.chalk = new chalk.constructor({enabled: typeof config.colors === constants.TYPE_OF.BOOLEAN ? config.colors : true});
-
-    this.debugKeys = {};
+    this.chalk = new chalk.constructor({enabled: typeof config.colors === constants.TYPE_OF.BOOLEAN ? config.colors : chalk.supportsColor});
+    this.contexts = {};
     this.textColorIndex = 0;
   }
 
   /**
-   * @param {*} msg
-   * @param {Object} [options]
+   * @param {Array} messages
+   * @param {number} severity
+   * @param {string} context
    * @param {Function} callback
    */
-  write (msg, options, callback) {
-    let msgPrefix = EMPTY,
-        message;
-
-    if (options.severity === constants.SEVERITY.debug && typeof options.debugKey === constants.TYPE_OF.STRING) {
-      msgPrefix = options.debugKey;
-      if (typeof this.debugKeys[options.debugKey] !== constants.TYPE_OF.UNDEFINED) {
-        msgPrefix = this.debugKeys[options.debugKey];
-      } else {
-        let color = textColors[this.textColorIndex];
-
-        msgPrefix = this.chalk[color](options.debugKey);
-        this.debugKeys[options.debugKey] = msgPrefix;
-
-        this.textColorIndex++;
-        if (this.textColorIndex === textColors.length) {
-          this.textColorIndex = 0;
-        }
+  write (messages, severity, context, callback) {
+    if (typeof this.contexts[context] === constants.TYPE_OF.UNDEFINED) {
+      this.contexts[context] = this.chalk[textColors[this.textColorIndex++]](context);
+      if (this.textColorIndex === textColors.length) {
+        this.textColorIndex = 0;
       }
-      msgPrefix += SPACE;
     }
 
-    if (options.severity <= 3) {
-      message = msgPrefix + this.chalk.red(this.stringify.stringify(msg, this.json, this.maxMessageSize - (msgPrefix.length + 10)));
-    } else if (options.severity === 4) {
-      message = msgPrefix + this.chalk.yellow(this.stringify.stringify(msg, this.json, this.maxMessageSize - (msgPrefix.length + 10)));
+    messages = Array.prototype.slice.call(messages);
+    messages.unshift(this.contexts[context]);
+
+    if (severity <= 4) {
+      nodeConsole.error.apply(null, messages);
     } else {
-      message = msgPrefix + this.stringify.stringify(msg, this.json, this.maxMessageSize - msgPrefix.length);
+      nodeConsole.log.apply(null, messages);
     }
 
-    nodeConsole.log(message);
     callback();
   }
 

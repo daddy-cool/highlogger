@@ -7,7 +7,7 @@
   "contributors": [
     "Michael Freund <michael.freund@shopgate.com>"
   ],
-  "main": "./lib/logger.js",
+  "main": "./lib/highlogger.js",
   "scripts": {
     "test": "node_modules/.bin/mocha --recursive",
     "cover": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- --recursive"

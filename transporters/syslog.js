@@ -2,10 +2,11 @@
 
 let moment = require('moment'),
     Socket = require('./socket'),
+    constants = require('../helpers/constants'),
+    error = require('../helpers/error'),
     osHostname = require('os').hostname(),
     path = require('path');
 
-const CONSTANTS = require('../constants');
 const NIL = '-';
 const SPACE = ' ';
 const PRI_START = '<';
@@ -48,11 +49,11 @@ const FILTER_PRINT_US_ASCII = /([\x21-\x7e])+/g;
  * @returns {string}
  */
 function filterPrintUsASCII (str, maxLength) {
-  if (typeof str === CONSTANTS.TYPE_OF.NUMBER || typeof str === CONSTANTS.TYPE_OF.BOOLEAN) {
+  if (typeof str === constants.TYPE_OF.NUMBER || typeof str === constants.TYPE_OF.BOOLEAN) {
     str = EMPTY + str;
   }
 
-  if (typeof str === CONSTANTS.TYPE_OF.STRING && str.length > 0) {
+  if (typeof str === constants.TYPE_OF.STRING && str.length > 0) {
     let strArray = str.match(FILTER_PRINT_US_ASCII);
     if (strArray && strArray.length) {
       return strArray.join(EMPTY).substring(0, maxLength);
@@ -81,11 +82,11 @@ class Syslog extends Socket {
    * @param {string} [config.dateFormat]
    */
   constructor (config) {
-    if (typeof config.address !== CONSTANTS.TYPE_OF.STRING) {
+    if (typeof config.address !== constants.TYPE_OF.STRING) {
       config.address = '127.0.0.1';
     }
 
-    if (typeof config.port !== CONSTANTS.TYPE_OF.NUMBER) {
+    if (typeof config.port !== constants.TYPE_OF.NUMBER) {
       config.port = 514;
     }
 
@@ -107,7 +108,7 @@ class Syslog extends Socket {
    * @returns {Syslog}
    */
   setSyslogJson (json) {
-    this.syslogJson = (typeof json === CONSTANTS.TYPE_OF.BOOLEAN) ? json : false;
+    this.syslogJson = (typeof json === constants.TYPE_OF.BOOLEAN) ? json : false;
 
     return this;
   }
@@ -117,7 +118,7 @@ class Syslog extends Socket {
    * @returns {Syslog}
    */
   setFacility (facility) {
-    this.facility = 8 * (typeof FACILITY[facility] === CONSTANTS.TYPE_OF.NUMBER ? FACILITY[facility] : FACILITY.user);
+    this.facility = 8 * (typeof FACILITY[facility] === constants.TYPE_OF.NUMBER ? FACILITY[facility] : FACILITY.user);
 
     return this;
   }
@@ -167,7 +168,7 @@ class Syslog extends Socket {
    * @returns {Syslog}
    */
   setTimezoneOffset (timezoneOffset) {
-    if (typeof timezoneOffset !== CONSTANTS.TYPE_OF.NUMBER || timezoneOffset < -16 || timezoneOffset > 16) {
+    if (typeof timezoneOffset !== constants.TYPE_OF.NUMBER || timezoneOffset < -16 || timezoneOffset > 16) {
       this.timezoneOffset = moment().utcOffset();
       return this;
     }
@@ -195,8 +196,8 @@ class Syslog extends Socket {
         msgPrefix;
 
     if (
-      options.severity === CONSTANTS.SEVERITY.debug &&
-      typeof options.debugKey === CONSTANTS.CONSTANTS.TYPE_OF.STRING
+      options.severity === constants.SEVERITY.debug &&
+      typeof options.debugKey === constants.constants.TYPE_OF.STRING
     ) {
       msgId = this.filterMessageId(options.debugKey);
     }
@@ -210,6 +211,34 @@ class Syslog extends Socket {
       {},
       callback
     );
+  }
+
+  /**
+   * @param {string} name
+   * @param {object} config
+   * @param {string} [config.severityMin]
+   * @param {string} [config.severityMax]
+   * @param {number} [config.sizeLimit]
+   * @param {boolean} [config.json]
+   */
+  static validate (name, config) {
+    super.validate(name, config);
+
+    if (config.hasOwnProperty('severityMin') && !constants.SEVERITY.hasOwnProperty(config.severityMin)) {
+      throw new Error(error.config.invalidValue(name, 'severityMin'));
+    }
+
+    if (config.hasOwnProperty('severityMax') && !constants.SEVERITY.hasOwnProperty(config.severityMax)) {
+      throw new Error(error.config.invalidValue(name, 'severityMax'));
+    }
+
+    if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
+      throw new Error(error.config.invalidValue(name, 'sizeLimit'));
+    }
+
+    if (config.hasOwnProperty('json') && typeof config.json !== constants.TYPE_OF.BOOLEAN) {
+      throw new Error(error.config.invalidValue(name, 'json'));
+    }
   }
 }
 

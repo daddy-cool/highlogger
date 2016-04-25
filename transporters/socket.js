@@ -1,9 +1,10 @@
 'use strict';
 
 let AbstractTransporter = require('./abstract'),
+    constants = require('../helpers/constants'),
+    error = require('../helpers/error'),
     dgram = require('dgram');
 
-const CONSTANTS = require('../constants');
 const SPACE = ' ';
 
 /**
@@ -19,7 +20,7 @@ class Socket extends AbstractTransporter {
    * @param {number} [config.maxMessageSize]
    */
   constructor (config) {
-    if (typeof config.maxMessageSize !== CONSTANTS.TYPE_OF.NUMBER) {
+    if (typeof config.maxMessageSize !== constants.TYPE_OF.NUMBER) {
       config.maxMessageSize = 512;
     }
 
@@ -49,7 +50,7 @@ class Socket extends AbstractTransporter {
    * @returns {Socket}
    */
   setAddress (address) {
-    if (typeof address !== CONSTANTS.TYPE_OF.STRING) {
+    if (typeof address !== constants.TYPE_OF.STRING) {
       throw new Error('socket transporters requires an address');
     } else {
       this.address = address;
@@ -63,7 +64,7 @@ class Socket extends AbstractTransporter {
    * @returns {Socket}
    */
   setPort (port) {
-    if (typeof port !== CONSTANTS.TYPE_OF.NUMBER) {
+    if (typeof port !== constants.TYPE_OF.NUMBER) {
       throw new Error('socket transporter requires a port');
     } else {
       this.port = port;
@@ -82,9 +83,9 @@ class Socket extends AbstractTransporter {
 
     if (
       options !== null &&
-      typeof options === CONSTANTS.CONSTANTS.TYPE_OF.OBJECT &&
-      options.severity === CONSTANTS.SEVERITY.debug &&
-      typeof options.debugKey === CONSTANTS.CONSTANTS.TYPE_OF.STRING
+      typeof options === constants.constants.TYPE_OF.OBJECT &&
+      options.severity === constants.SEVERITY.debug &&
+      typeof options.debugKey === constants.constants.TYPE_OF.STRING
     ) {
       let msgPrefix = options.debugKey + SPACE;
       msgBuffer = new Buffer(msgPrefix + this.stringify.stringify(msg, this.json, this.maxMessageSize -  msgPrefix.length));
@@ -100,6 +101,34 @@ class Socket extends AbstractTransporter {
       this.address,
       callback
     );
+  }
+
+  /**
+   * @param {string} name
+   * @param {object} config
+   * @param {string} [config.severityMin]
+   * @param {string} [config.severityMax]
+   * @param {number} [config.sizeLimit]
+   * @param {boolean} [config.json]
+   */
+  static validate (name, config) {
+    super.validate(name, config);
+
+    if (config.hasOwnProperty('severityMin') && !constants.SEVERITY.hasOwnProperty(config.severityMin)) {
+      throw new Error(error.config.invalidValue(name, 'severityMin'));
+    }
+
+    if (config.hasOwnProperty('severityMax') && !constants.SEVERITY.hasOwnProperty(config.severityMax)) {
+      throw new Error(error.config.invalidValue(name, 'severityMax'));
+    }
+
+    if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
+      throw new Error(error.config.invalidValue(name, 'sizeLimit'));
+    }
+
+    if (config.hasOwnProperty('json') && typeof config.json !== constants.TYPE_OF.BOOLEAN) {
+      throw new Error(error.config.invalidValue(name, 'json'));
+    }
   }
 }
 

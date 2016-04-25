@@ -4,9 +4,9 @@ let AbstractTransporter = require('./abstract'),
     nodeConsole = console,
     chalk = require('chalk'),
     textColors = ['green', 'blue', 'magenta', 'cyan'],
-    common = require('../common');
+    error = require('../helpers/error'),
+    constants = require('../helpers/constants');
 
-const CONSTANTS = require('../constants');
 const SPACE = ' ';
 const EMPTY = '';
 
@@ -24,9 +24,9 @@ class Console extends AbstractTransporter {
    */
   constructor (config) {
     super(config);
-    
+
     //noinspection JSUnresolvedFunction
-    this.chalk = new chalk.constructor({enabled: typeof config.colors === CONSTANTS.TYPE_OF.BOOLEAN ? config.colors : true});
+    this.chalk = new chalk.constructor({enabled: typeof config.colors === constants.TYPE_OF.BOOLEAN ? config.colors : true});
 
     this.debugKeys = {};
     this.textColorIndex = 0;
@@ -41,9 +41,9 @@ class Console extends AbstractTransporter {
     let msgPrefix = EMPTY,
         message;
 
-    if (options.severity === CONSTANTS.SEVERITY.debug && typeof options.debugKey === CONSTANTS.TYPE_OF.STRING) {
+    if (options.severity === constants.SEVERITY.debug && typeof options.debugKey === constants.TYPE_OF.STRING) {
       msgPrefix = options.debugKey;
-      if (typeof this.debugKeys[options.debugKey] !== CONSTANTS.TYPE_OF.UNDEFINED) {
+      if (typeof this.debugKeys[options.debugKey] !== constants.TYPE_OF.UNDEFINED) {
         msgPrefix = this.debugKeys[options.debugKey];
       } else {
         let color = textColors[this.textColorIndex];
@@ -71,11 +71,16 @@ class Console extends AbstractTransporter {
     callback();
   }
 
-  static validateConfig (name, config) {
-    super.validateConfig(name, config);
+  /**
+   * @param {string} name
+   * @param {object} config
+   * @param {boolean} [config.colors]
+   */
+  static validate (name, config) {
+    super.validate(name, config);
 
-    if (config.hasOwnProperty('colors') && typeof config.colors !== common.constants.TYPE_OF.BOOLEAN) {
-      throw new Error(common.error.config.invalidValue(name, 'colors'));
+    if (config.hasOwnProperty('colors') && typeof config.colors !== constants.TYPE_OF.BOOLEAN) {
+      throw new Error(error.config.invalidValue(name, 'colors'));
     }
   }
 }

@@ -13,5 +13,10 @@ module.exports = {
     notImplemented: function transporterNotImplemented (transporterType, functionName) {
       return `highlogger: function '${functionName}' not implemented for transporter type '${transporterType}'`;
     }
+  },
+  general: {
+    notInstanced: function notInstanced () {
+      return 'highlogger: not instanced';
+    }
   }
 };

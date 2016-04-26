@@ -32,9 +32,10 @@ class Console extends AbstractTransporter {
    * @param {Array} messages
    * @param {number} severity
    * @param {string} context
+   * @param {Transporters} transporters
    * @param {Function} callback
    */
-  write (messages, severity, context, callback) {
+  write (messages, severity, context, transporters, callback) {
     if (typeof this.contexts[context] === constants.TYPE_OF.UNDEFINED) {
       this.contexts[context] = this.chalk[textColors[this.textColorIndex++]](context);
       if (this.textColorIndex === textColors.length) {

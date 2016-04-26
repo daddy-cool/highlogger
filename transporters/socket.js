@@ -26,9 +26,32 @@ class Socket extends AbstractTransporter {
 
     super(config);
 
-    this.setAddress(config.address)
+    this
+        .setSizeLimit(config.sizeLimit)
+        .setJson(config.json)
+        .setAddress(config.address)
         .setPort(config.port)
         .initSocket(config);
+  }
+
+  /**
+   * @param {boolean} json
+   * @returns {AbstractTransporter}
+   */
+  setJson (json) {
+    this.json = (typeof json !== constants.TYPE_OF.UNDEFINED) ? json : false;
+
+    return this;
+  }
+
+  /**
+   * @param {number} len
+   * @returns {AbstractTransporter}
+   */
+  setSizeLimit (len) {
+    this.sizeLimit = (typeof len !== constants.TYPE_OF.UNDEFINED) ? len : Infinity;
+
+    return this;
   }
 
   /**
@@ -113,14 +136,6 @@ class Socket extends AbstractTransporter {
    */
   static validate (name, config) {
     super.validate(name, config);
-
-    if (config.hasOwnProperty('severityMin') && !constants.SEVERITY.hasOwnProperty(config.severityMin)) {
-      throw new Error(error.config.invalidValue(name, 'severityMin'));
-    }
-
-    if (config.hasOwnProperty('severityMax') && !constants.SEVERITY.hasOwnProperty(config.severityMax)) {
-      throw new Error(error.config.invalidValue(name, 'severityMax'));
-    }
 
     if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
       throw new Error(error.config.invalidValue(name, 'sizeLimit'));

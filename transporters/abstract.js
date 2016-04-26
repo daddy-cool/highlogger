@@ -10,25 +10,25 @@ class AbstractTransporter {
 
   /**
    * @param {object} config
+   * @param {string} [config.fallback]
    * @param {string} [config.severityMin]
    * @param {string} [config.severityMax]
    * @param {number} [config.sizeLimit]
    */
   constructor (config) {
     this
-      .setSeverity(config.severityMin, config.severityMax)
-      .setSizeLimit(config.sizeLimit)
-      .setJson(config.json);
+      .setFallback(config.fallback)
+      .setSeverity(config.severityMin, config.severityMax);
 
     //this.stringify = new common.stringify(config);
   }
 
   /**
-   * @param {boolean} json
+   * @param transporter
    * @returns {AbstractTransporter}
    */
-  setJson (json) {
-    this.json = (typeof json !== constants.TYPE_OF.UNDEFINED) ? json : false;
+  setFallback (transporter) {
+    this.fallback = transporter;
 
     return this;
   }
@@ -43,16 +43,6 @@ class AbstractTransporter {
       minimum: (typeof severityMin !== constants.TYPE_OF.UNDEFINED) ? constants.SEVERITY[severityMin] : constants.SEVERITY.emerg,
       maximum: (typeof severityMax !== constants.TYPE_OF.UNDEFINED) ? constants.SEVERITY[severityMax] : constants.SEVERITY.debug
     };
-
-    return this;
-  }
-
-  /**
-   * @param {number} len
-   * @returns {AbstractTransporter}
-   */
-  setSizeLimit (len) {
-    this.sizeLimit = (typeof len !== constants.TYPE_OF.UNDEFINED) ? len : Infinity;
 
     return this;
   }
@@ -77,14 +67,6 @@ class AbstractTransporter {
 
     if (config.hasOwnProperty('severityMax') && !constants.SEVERITY.hasOwnProperty(config.severityMax)) {
       throw new Error(error.config.invalidValue(name, 'severityMax'));
-    }
-
-    if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
-      throw new Error(error.config.invalidValue(name, 'sizeLimit'));
-    }
-
-    if (config.hasOwnProperty('json') && typeof config.json !== constants.TYPE_OF.BOOLEAN) {
-      throw new Error(error.config.invalidValue(name, 'json'));
     }
   }
 }

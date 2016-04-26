@@ -2,6 +2,7 @@
 
 const CONSTANTS = {
   SEVERITY: {
+    disabled: -1, // use for fallback transporters
     emerg: 0, // system is unusable
     alert: 1, // action must be taken immediately
     crit: 2, // critical conditions

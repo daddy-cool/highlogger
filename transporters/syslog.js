@@ -223,22 +223,6 @@ class Syslog extends Socket {
    */
   static validate (name, config) {
     super.validate(name, config);
-
-    if (config.hasOwnProperty('severityMin') && !constants.SEVERITY.hasOwnProperty(config.severityMin)) {
-      throw new Error(error.config.invalidValue(name, 'severityMin'));
-    }
-
-    if (config.hasOwnProperty('severityMax') && !constants.SEVERITY.hasOwnProperty(config.severityMax)) {
-      throw new Error(error.config.invalidValue(name, 'severityMax'));
-    }
-
-    if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
-      throw new Error(error.config.invalidValue(name, 'sizeLimit'));
-    }
-
-    if (config.hasOwnProperty('json') && typeof config.json !== constants.TYPE_OF.BOOLEAN) {
-      throw new Error(error.config.invalidValue(name, 'json'));
-    }
   }
 }
 

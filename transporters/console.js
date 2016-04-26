@@ -16,7 +16,7 @@ class Console extends AbstractTransporter {
   constructor (config) {
     super(config);
 
-    //noinspection JSUnresolvedFunction
+    //noinspection JSUnresolvedFunction,JSUnresolvedVariable
     this.chalk = new chalk.constructor({enabled: typeof config.colors === constants.TYPE_OF.BOOLEAN ? config.colors : chalk.supportsColor});
     this.contexts = {};
     this.textColorIndex = 0;

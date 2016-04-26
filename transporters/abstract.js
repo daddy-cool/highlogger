@@ -7,6 +7,7 @@ class AbstractTransporter {
 
   /**
    * @param {object} config
+   * @param {number} [config.sizeLimit]
    * @param {string} [config.severityMin]
    * @param {string} [config.severityMax]
    * @param {AbstractTransporter} [config.fallback]
@@ -14,8 +15,19 @@ class AbstractTransporter {
   constructor (config) {
 
     this
+      .setSizeLimit(config.sizeLimit)
       .setSeverity(config.severityMin, config.severityMax)
       .setFallback(config.fallback);
+  }
+
+  /**
+   * @param {number} sizeLimit
+   * @returns {AbstractTransporter}
+   */
+  setSizeLimit (sizeLimit) {
+    this.sizeLimit = typeof sizeLimit !== constants.TYPE_OF.UNDEFINED ? sizeLimit : Infinity;
+
+    return this;
   }
 
   /**
@@ -54,6 +66,10 @@ class AbstractTransporter {
    * @param {boolean} [config.json]
    */
   static validate (config) {
+    if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
+      throw new Error(error.config.invalidValue('severityMin'));
+    }
+
     if (config.hasOwnProperty('severityMin') && !constants.SEVERITY.hasOwnProperty(config.severityMin)) {
       throw new Error(error.config.invalidValue('severityMin'));
     }

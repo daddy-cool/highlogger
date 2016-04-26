@@ -7,12 +7,24 @@ const EMPTY = '';
 
 class Stringify {
 
+  constructor () {
+
+  }
+
+  stringify (elm) {
+    return elm;
+  }
+
+}
+
+class Stringify2 {
+
   /**
    * @param config
    * @param {number} [config.jsonTimeout]
    * @param {String} [config.jsonDefaultField]
    */
-  constructor (config) {
+  constructor (sizeLimit) {
     this
       ._setDefaultField(config.jsonDefaultField)
       ._setTimeout(config.jsonTimeout);

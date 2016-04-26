@@ -7,17 +7,11 @@ let AbstractTransporter = require('./abstract'),
     error = require('../helpers/error'),
     constants = require('../helpers/constants');
 
-/**
- * @namespace Transporters
- */
 class Console extends AbstractTransporter {
 
   /**
    * @param {Object} config
-   * @param {Object} [config.severity]
    * @param {boolean} [config.colors]
-   * @param {number} [config.maxMessageSize]
-   * @param {Stream} [config.stream]
    */
   constructor (config) {
     super(config);
@@ -32,10 +26,9 @@ class Console extends AbstractTransporter {
    * @param {Array} messages
    * @param {number} severity
    * @param {string} context
-   * @param {Transporters} transporters
    * @param {Function} callback
    */
-  write (messages, severity, context, transporters, callback) {
+  write (messages, severity, context, callback) {
     if (typeof this.contexts[context] === constants.TYPE_OF.UNDEFINED) {
       this.contexts[context] = this.chalk[textColors[this.textColorIndex++]](context);
       if (this.textColorIndex === textColors.length) {
@@ -56,15 +49,14 @@ class Console extends AbstractTransporter {
   }
 
   /**
-   * @param {string} name
    * @param {object} config
    * @param {boolean} [config.colors]
    */
-  static validate (name, config) {
-    super.validate(name, config);
+  static validate (config) {
+    super.validate(config);
 
     if (config.hasOwnProperty('colors') && typeof config.colors !== constants.TYPE_OF.BOOLEAN) {
-      throw new Error(error.config.invalidValue(name, 'colors'));
+      throw new Error(error.config.invalidValue('colors'));
     }
   }
 }

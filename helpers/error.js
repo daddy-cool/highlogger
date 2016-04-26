@@ -2,16 +2,16 @@
 
 module.exports = {
   config: {
-    invalidValue: function configInvalidValue (transporterName, field) {
-      return `highlogger: invalid value for '${field}' for transporter '${transporterName}'`;
+    invalidValue: function configInvalidValue (field) {
+      return `highlogger: invalid value for '${field}'`;
     },
     invalid: function configInvalid () {
       return 'highlogger: invalid config';
     }
   },
   transporter: {
-    notImplemented: function transporterNotImplemented (transporterType, functionName) {
-      return `highlogger: function '${functionName}' not implemented for transporter type '${transporterType}'`;
+    notImplemented: function transporterNotImplemented (functionName) {
+      return `highlogger: function '${functionName}' not implemented`;
     }
   },
   general: {

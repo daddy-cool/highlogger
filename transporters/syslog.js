@@ -63,9 +63,6 @@ function filterPrintUsASCII (str, maxLength) {
   return NIL;
 }
 
-/**
- * @namespace Transporters
- */
 class Syslog extends Socket {
 
   /**

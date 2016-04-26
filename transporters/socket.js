@@ -7,9 +7,6 @@ let AbstractTransporter = require('./abstract'),
 
 const SPACE = ' ';
 
-/**
- * @namespace Transporters
- */
 class Socket extends AbstractTransporter {
 
   /**

@@ -23,7 +23,7 @@ class Console extends AbstractTransporter {
     //noinspection JSUnresolvedFunction,JSUnresolvedVariable
     this.chalk = new chalk.constructor({enabled: typeof config.colors === constants.TYPE_OF.BOOLEAN ? config.colors : chalk.supportsColor});
     //noinspection JSUnresolvedVariable
-    this.stringify = new Stringify().stringify;
+    this.stringify = new Stringify({json: true});
     this.contexts = {};
     this.textColorIndex = 0;
   }
@@ -35,29 +35,35 @@ class Console extends AbstractTransporter {
    * @param {Function} callback
    */
   write (messages, severity, context, callback) {
-    let message = this.stringify(messages);
+    let self = this;
 
-    if (typeof this.contexts[context] === constants.TYPE_OF.UNDEFINED) {
-      this.contexts[context] = this.chalk[textColors[this.textColorIndex++]](context) + SPACE;
-      if (this.textColorIndex === textColors.length) {
-        this.textColorIndex = 0;
+    if (typeof self.contexts[context] === constants.TYPE_OF.UNDEFINED) {
+      self.contexts[context] = self.chalk[textColors[self.textColorIndex++]](context) + SPACE;
+      if (self.textColorIndex === textColors.length) {
+        self.textColorIndex = 0;
       }
     }
 
-    if ((this.contexts[context] + message).length > this.sizeLimit) {
-      if (this.fallback) {
-        let self = this;
-        this.fallback.write(messages, severity, context, function writeCb (a) {
-          self.log(`message exceeded sizeLimit of '${self.sizeLimit}'. ${a}`, severity, callback);
-        });
-      } else {
-        this.log(`message exceeded sizeLimit of '${this.sizeLimit}' and no fallback was found`, severity, callback);
+    this.stringify.stringify(messages, function consoleStringify (message) {
+      if ((self.contexts[context] + message).length <= self.sizeLimit) {
+        return self.log(self.contexts[context] + message, severity, callback);
       }
-    } else {
-      this.log(message, severity, callback);
-    }
+
+      if (!self.fallback) {
+        return self.log(`${self.contexts[context]} message exceeded sizeLimit of '${self.sizeLimit}' and no fallback was found`, severity, callback);
+      }
+
+      self.fallback.write(messages, severity, context, function writeCb (a, b) {
+        self.log(`${self.contexts[context]} message exceeded sizeLimit of '${self.sizeLimit}'.${typeof b !== constants.TYPE_OF.UNDEFINED ? ' ' + b : ''}`, severity, callback);
+      });
+    });
   }
 
+  /**
+   * @param {string} message
+   * @param {number} severity
+   * @param {Function} callback
+   */
   log (message, severity, callback) {
     if (severity <= 4) {
       this.console.error(message);
@@ -65,7 +71,7 @@ class Console extends AbstractTransporter {
       this.console.log(message);
     }
 
-    callback("blub");
+    callback(null, "blub");
   }
 
   /**

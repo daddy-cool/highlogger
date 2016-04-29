@@ -3,9 +3,8 @@
 let AbstractTransporter = require('./abstract'),
     constants = require('../helpers/constants'),
     error = require('../helpers/error'),
+    Stringify = require('../helpers/stringify'),
     dgram = require('dgram');
-
-const SPACE = ' ';
 
 class Socket extends AbstractTransporter {
 
@@ -14,53 +13,32 @@ class Socket extends AbstractTransporter {
    * @param {string} config.address
    * @param {number} config.port
    * @param {string} config.method
-   * @param {number} [config.maxMessageSize]
+   * @param {number} [config.sizeLimit]
    */
   constructor (config) {
-    if (typeof config.maxMessageSize !== constants.TYPE_OF.NUMBER) {
-      config.maxMessageSize = 512;
+    if (typeof config.sizeLimit === constants.TYPE_OF.UNDEFINED) {
+      config.sizeLimit = 512;
     }
 
     super(config);
 
+    this.validate(config);
+
     this
-        .setSizeLimit(config.sizeLimit)
-        .setJson(config.json)
         .setAddress(config.address)
         .setPort(config.port)
-        .initSocket(config);
+        .initSocket(config.method);
+
+    //noinspection JSUnresolvedVariable
+    this.stringify = new Stringify(config);
   }
 
   /**
-   * @param {boolean} json
-   * @returns {AbstractTransporter}
-   */
-  setJson (json) {
-    this.json = (typeof json !== constants.TYPE_OF.UNDEFINED) ? json : false;
-
-    return this;
-  }
-
-  /**
-   * @param {number} len
-   * @returns {AbstractTransporter}
-   */
-  setSizeLimit (len) {
-    this.sizeLimit = (typeof len !== constants.TYPE_OF.UNDEFINED) ? len : Infinity;
-
-    return this;
-  }
-
-  /**
-   * @param {Object} config
+   * @param {String} method
    * @returns {Socket}
    */
-  initSocket (config) {
-    if (config.method === 'udp4') {
-      this.socket = dgram.createSocket('udp4');
-    } else {
-      throw new Error('unsupported socket method "' + config.method + '"');
-    }
+  initSocket (method) {
+    this.socket = dgram.createSocket(method);
 
     return this;
   }
@@ -70,11 +48,7 @@ class Socket extends AbstractTransporter {
    * @returns {Socket}
    */
   setAddress (address) {
-    if (typeof address !== constants.TYPE_OF.STRING) {
-      throw new Error('socket transporters requires an address');
-    } else {
-      this.address = address;
-    }
+    this.address = address;
 
     return this;
   }
@@ -84,34 +58,54 @@ class Socket extends AbstractTransporter {
    * @returns {Socket}
    */
   setPort (port) {
-    if (typeof port !== constants.TYPE_OF.NUMBER) {
-      throw new Error('socket transporter requires a port');
-    } else {
-      this.port = port;
-    }
+    //noinspection JSUnresolvedVariable
+    this.port = port;
 
     return this;
   }
 
   /**
-   * @param {*} msg
-   * @param {Object} [options]
-   * @param {Function} [callback]
+   * @param {Array} messages
+   * @param {number} severity
+   * @param {string} context
+   * @param {Function} callback
    */
-  write (msg, options, callback) {
-    let msgBuffer;
+  write (messages, severity, context, callback) {
+    let self = this;
 
-    if (
-      options !== null &&
-      typeof options === constants.constants.TYPE_OF.OBJECT &&
-      options.severity === constants.SEVERITY.debug &&
-      typeof options.debugKey === constants.constants.TYPE_OF.STRING
-    ) {
-      let msgPrefix = options.debugKey + SPACE;
-      msgBuffer = new Buffer(msgPrefix + this.stringify.stringify(msg, this.json, this.maxMessageSize -  msgPrefix.length));
-    } else {
-      msgBuffer = new Buffer(this.stringify.stringify(msg, this.json, this.maxMessageSize));
-    }
+    this.stringify.stringify(context, messages, function socketStringify (message) {
+      if (message.length <= self.sizeLimit) {
+        return self.socketLog(message, callback);
+      }
+
+      if (!self.fallback) {
+        return self.stringify.stringify(
+          context,
+          [error.transporter.exceededSizeLimit(self.sizeLimit)],
+          function stringifyFallback (message2) {
+            self.socketLog(message2, callback);
+          }
+        );
+      }
+
+      self.fallback.write(messages, severity, context, function writeCb (e, fallbackMessage) {
+        let payload = [error.transporter.exceededSizeLimit(self.sizeLimit)];
+        if (typeof fallbackMessage !== constants.TYPE_OF.UNDEFINED) {
+          payload.push(fallbackMessage);
+        }
+        self.stringify.stringify(
+          context,
+          payload,
+          function stringifyFallback (message3) {
+            self.socketLog(message3, callback);
+          }
+        );
+      });
+    });
+  }
+
+  socketLog (message, callback) {
+    let msgBuffer = new Buffer(message);
 
     this.socket.send(
       msgBuffer,
@@ -124,22 +118,22 @@ class Socket extends AbstractTransporter {
   }
 
   /**
-   * @param {string} name
    * @param {object} config
-   * @param {string} [config.severityMin]
-   * @param {string} [config.severityMax]
-   * @param {number} [config.sizeLimit]
-   * @param {boolean} [config.json]
+   * @param {string} config.address
+   * @param {number} config.port
+   * @param {string} config.method
    */
-  static validate (name, config) {
-    super.validate(name, config);
-
-    if (config.hasOwnProperty('sizeLimit') && typeof config.sizeLimit !== constants.TYPE_OF.NUMBER) {
-      throw new Error(error.config.invalidValue(name, 'sizeLimit'));
+  validate (config) {
+    if (typeof config.address !== constants.TYPE_OF.STRING) {
+      throw new Error(error.config.invalidValue('address'));
     }
 
-    if (config.hasOwnProperty('json') && typeof config.json !== constants.TYPE_OF.BOOLEAN) {
-      throw new Error(error.config.invalidValue(name, 'json'));
+    if (typeof config.port !== constants.TYPE_OF.NUMBER) {
+      throw new Error(error.config.invalidValue('port'));
+    }
+
+    if (typeof config.method !== constants.TYPE_OF.STRING || config.method !== 'udp4') {
+      throw new Error(error.config.invalidValue('method'));
     }
   }
 }

@@ -1,6 +1,6 @@
 'use strict';
 
-let Stringify = require('../lib/stringify'),
+let Stringify = require('../helpers/stringify'),
     stringify = new Stringify({}),
     fs = require('fs'),
     assert = require('assert');

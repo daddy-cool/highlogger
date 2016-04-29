@@ -7,8 +7,6 @@ let AbstractTransporter = require('./abstract'),
     Stringify = require('../helpers/stringify'),
     constants = require('../helpers/constants');
 
-const SPACE = ' ';
-
 class Console extends AbstractTransporter {
 
   /**
@@ -17,13 +15,12 @@ class Console extends AbstractTransporter {
    */
   constructor (config) {
     super(config);
+    this.validate(config);
 
-    //noinspection JSUnresolvedVariable,JSUnresolvedFunction
-    this.console = new console.Console(process.stdout, process.stderr);
     //noinspection JSUnresolvedFunction,JSUnresolvedVariable
     this.chalk = new chalk.constructor({enabled: typeof config.colors === constants.TYPE_OF.BOOLEAN ? config.colors : chalk.supportsColor});
     //noinspection JSUnresolvedVariable
-    this.stringify = new Stringify({json: true});
+    this.stringify = new Stringify(config);
     this.contexts = {};
     this.textColorIndex = 0;
   }
@@ -38,23 +35,39 @@ class Console extends AbstractTransporter {
     let self = this;
 
     if (typeof self.contexts[context] === constants.TYPE_OF.UNDEFINED) {
-      self.contexts[context] = self.chalk[textColors[self.textColorIndex++]](context) + SPACE;
+      self.contexts[context] = self.chalk[textColors[self.textColorIndex++]](context);
       if (self.textColorIndex === textColors.length) {
         self.textColorIndex = 0;
       }
     }
 
-    this.stringify.stringify(messages, function consoleStringify (message) {
-      if ((self.contexts[context] + message).length <= self.sizeLimit) {
-        return self.log(self.contexts[context] + message, severity, callback);
+    this.stringify.stringify(this.contexts[context], messages, function consoleStringify (message) {
+      if (message.length <= self.sizeLimit) {
+        return self.log(message, severity, callback);
       }
 
       if (!self.fallback) {
-        return self.log(`${self.contexts[context]} message exceeded sizeLimit of '${self.sizeLimit}' and no fallback was found`, severity, callback);
+        return self.stringify.stringify(
+          self.contexts[context],
+          [error.transporter.exceededSizeLimit(self.sizeLimit)],
+          function stringifyFallback (message2) {
+            self.log(message2, severity, callback);
+          }
+        );
       }
 
-      self.fallback.write(messages, severity, context, function writeCb (a, b) {
-        self.log(`${self.contexts[context]} message exceeded sizeLimit of '${self.sizeLimit}'.${typeof b !== constants.TYPE_OF.UNDEFINED ? ' ' + b : ''}`, severity, callback);
+      self.fallback.write(messages, severity, context, function writeCb (e, fallbackMessage) {
+        let payload = [error.transporter.exceededSizeLimit(self.sizeLimit)];
+        if (typeof fallbackMessage !== constants.TYPE_OF.UNDEFINED) {
+          payload.push(fallbackMessage);
+        }
+        self.stringify.stringify(
+          self.contexts[context],
+          payload,
+          function stringifyFallback (message3) {
+            self.log(message3, severity, callback);
+          }
+        );
       });
     });
   }
@@ -66,21 +79,19 @@ class Console extends AbstractTransporter {
    */
   log (message, severity, callback) {
     if (severity <= 4) {
-      this.console.error(message);
+      process.stdout.write(message);
     } else {
-      this.console.log(message);
+      process.stderr.write(message);
     }
 
-    callback(null, "blub");
+    callback();
   }
 
   /**
    * @param {object} config
    * @param {boolean} [config.colors]
    */
-  static validate (config) {
-    super.validate(config);
-
+  validate (config) {
     if (config.hasOwnProperty('colors') && typeof config.colors !== constants.TYPE_OF.BOOLEAN) {
       throw new Error(error.config.invalidValue('colors'));
     }

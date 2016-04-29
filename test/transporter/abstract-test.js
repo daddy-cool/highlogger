@@ -1,9 +1,9 @@
 'use strict';
 
-let AbstractTransporter = require('../../lib/transporter/abstract'),
+let AbstractTransporter = require('../../transporters/abstract'),
     assert = require('assert');
 
-const SHARED_CONSTANTS = require('../../lib/shared-constants');
+const SHARED_CONSTANTS = require('../../helpers/constants');
 
 describe('transporter abstract', function () {
   describe('set severity', function () {

@@ -12,6 +12,9 @@ module.exports = {
   transporter: {
     notImplemented: function transporterNotImplemented (functionName) {
       return `highlogger: function '${functionName}' not implemented`;
+    },
+    exceededSizeLimit: function transporterExceededSizeLimit (sizeLimit) {
+      return `message exceeded sizeLimit of ${sizeLimit}`;
     }
   },
   general: {

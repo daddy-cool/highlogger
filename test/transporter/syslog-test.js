@@ -1,7 +1,7 @@
 'use strict';
 
-let SocketTransporter = require('../../lib/transporter/socket'),
-    SyslogTransporter = require('../../lib/transporter/syslog'),
+let SocketTransporter = require('../../transporters/socket'),
+    SyslogTransporter = require('../../transporters/syslog'),
     moment = require('moment'),
     parseFormat = require('moment-parseformat'),
     assert = require('assert'),
@@ -9,7 +9,7 @@ let SocketTransporter = require('../../lib/transporter/socket'),
     fs = require('fs'),
     dgram = require('dgram');
 
-const SHARED_CONSTANTS = require('../../lib/shared-constants');
+const SHARED_CONSTANTS = require('../../helpers/constants');
 
 describe('transporter syslog', function () {
   describe('init', function () {

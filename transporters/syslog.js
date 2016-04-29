@@ -4,11 +4,12 @@ let moment = require('moment'),
     Socket = require('./socket'),
     constants = require('../helpers/constants'),
     error = require('../helpers/error'),
+    Stringify = require('../helpers/stringify'),
     osHostname = require('os').hostname(),
     path = require('path');
 
-const NIL = '-';
 const SPACE = ' ';
+const NIL = '-';
 const PRI_START = '<';
 const PRI_END = '>';
 const VERSION = '1';
@@ -87,27 +88,23 @@ class Syslog extends Socket {
       config.port = 514;
     }
 
-    config.method = 'udp4';
-    let syslogJson = config.json;
+    if (typeof config.method !== constants.TYPE_OF.STRING) {
+      config.method = 'udp4';
+    }
+
+    let json = typeof config.json === constants.TYPE_OF.BOOLEAN ? config.json : false;
     config.json = false;
     super(config);
+    config.json = json;
+    this.stringifySyslog = new Stringify(config);
+
+    this.validate(config);
 
     this.setFacility(config.facility)
         .setHostname(config.hostname)
         .setAppName(config.appName)
         .setProcessId(config.processId)
-        .setTimezoneOffset(config.timezoneOffset)
-        .setSyslogJson(syslogJson);
-  }
-
-  /**
-   * @param {boolean} json
-   * @returns {Syslog}
-   */
-  setSyslogJson (json) {
-    this.syslogJson = (typeof json === constants.TYPE_OF.BOOLEAN) ? json : false;
-
-    return this;
+        .setTimezoneOffset(config.timezoneOffset);
   }
 
   /**
@@ -166,6 +163,7 @@ class Syslog extends Socket {
    */
   setTimezoneOffset (timezoneOffset) {
     if (typeof timezoneOffset !== constants.TYPE_OF.NUMBER || timezoneOffset < -16 || timezoneOffset > 16) {
+      //noinspection JSUnresolvedFunction
       this.timezoneOffset = moment().utcOffset();
       return this;
     }
@@ -183,43 +181,65 @@ class Syslog extends Socket {
     return filterPrintUsASCII(messageId, 32);
   }
 
+  getPriority (severity) {
+    return PRI_START + (this.facility + severity) + PRI_END;
+  }
+
   /**
-   * @param {*} msg
-   * @param {Object} options
+   * @param {Array} messages
+   * @param {number} severity
+   * @param {string} context
    * @param {Function} callback
    */
-  write (msg, options, callback) {
-    let msgId = NIL,
-        msgPrefix;
+  write (messages, severity, context, callback) {
+    //noinspection JSUnresolvedFunction
+    let self = this,
+        syslogPrefixes = [
+          this.getPriority(severity) + VERSION,
+          moment().utcOffset(this.timezoneOffset).format(DATE_FORMAT),
+          this.hostname,
+          this.appName,
+          this.processId,
+          this.filterMessageId(context),
+          NIL
+        ].join(SPACE);
 
-    if (
-      options.severity === constants.SEVERITY.debug &&
-      typeof options.debugKey === constants.constants.TYPE_OF.STRING
-    ) {
-      msgId = this.filterMessageId(options.debugKey);
-    }
+    self.stringifySyslog.stringify(EMPTY, messages, function syslogStringify (message) {
+      if ((syslogPrefixes + SPACE + message).length <= self.sizeLimit) {
+        return self.socketLog(syslogPrefixes + SPACE + message, callback);
+      }
 
-    msgPrefix = PRI_START + (this.facility + options.severity) + PRI_END + VERSION + SPACE
-    + moment().utcOffset(this.timezoneOffset).format(DATE_FORMAT) + SPACE + this.hostname + SPACE + this.appName
-    + SPACE + this.processId + SPACE + msgId + SPACE + NIL + SPACE;
+      let fallbackMessages = [error.transporter.exceededSizeLimit(self.sizeLimit)];
+      if (!self.fallback) {
+        return self.fallbackSyslog(syslogPrefixes, fallbackMessages, callback);
+      }
 
-    super.write(
-      msgPrefix + this.stringify.stringify(msg, this.syslogJson, this.maxMessageSize -  msgPrefix.length),
-      {},
-      callback
+      self.fallback.write(messages, severity, context, function writeCb (e, fallbackMessage) {
+        if (typeof fallbackMessage !== constants.TYPE_OF.UNDEFINED) {
+          fallbackMessages.push(fallbackMessage);
+        }
+        self.fallbackSyslog(syslogPrefixes, fallbackMessages, callback);
+      });
+    });
+  }
+
+  fallbackSyslog (syslogPrefixes, payload, callback) {
+    let self = this;
+
+    this.stringifySyslog.stringify(
+      EMPTY,
+      payload,
+      function syslogStringifyFallback (message) {
+        self.socketLog(syslogPrefixes + SPACE + message, callback);
+      }
     );
   }
 
   /**
-   * @param {string} name
    * @param {object} config
-   * @param {string} [config.severityMin]
-   * @param {string} [config.severityMax]
-   * @param {number} [config.sizeLimit]
-   * @param {boolean} [config.json]
    */
-  static validate (name, config) {
-    super.validate(name, config);
+  validate (config) {
+
   }
 }
 

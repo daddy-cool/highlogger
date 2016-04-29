@@ -1,11 +1,11 @@
 'use strict';
 
-let AbstractTransporter = require('../../lib/transporter/abstract'),
-    SocketTransporter = require('../../lib/transporter/socket'),
+let AbstractTransporter = require('../../transporters/abstract'),
+    SocketTransporter = require('../../transporters/socket'),
     assert = require('assert'),
     dgram = require('dgram');
 
-const SHARED_CONSTANTS = require('../../lib/shared-constants');
+const SHARED_CONSTANTS = require('../../helpers/constants');
 
 describe('transporter socket', function () {
   it('should inherit from AbstractTransporter', function () {

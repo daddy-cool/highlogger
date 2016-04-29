@@ -1,12 +1,12 @@
 'use strict';
 
-let AbstractTransporter = require('../../lib/transporter/abstract'),
-    ConsoleTransporter = require('../../lib/transporter/console'),
+let AbstractTransporter = require('../../transporters/abstract'),
+    ConsoleTransporter = require('../../transporters/console'),
     assert = require('assert'),
     chalk = new (require('chalk')).constructor({enabled: true}),
     stream = require('stream');
 
-const SHARED_CONSTANTS = require('../../lib/shared-constants');
+const SHARED_CONSTANTS = require('../../helpers/constants');
 
 describe('transporter console', function () {
   it('should inherit from AbstractTransporter', function () {

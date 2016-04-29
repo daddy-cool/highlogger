@@ -77,6 +77,10 @@ class AbstractTransporter {
     if (config.hasOwnProperty('severityMax') && !constants.SEVERITY.hasOwnProperty(config.severityMax)) {
       throw new Error(error.config.invalidValue('severityMax'));
     }
+
+    if (config.hasOwnProperty('json') && typeof config.json !== constants.TYPE_OF.BOOLEAN) {
+      throw new Error(error.config.invalidValue('json'));
+    }
   }
 }
 

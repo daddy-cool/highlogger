@@ -10,9 +10,15 @@ const SPACE = ' ';
 
 class Stringify {
 
+  /**
+   * @param {object} [config]
+   * @param {boolean} [config.json]
+   */
   constructor (config) {
-    this.json = config.json;
-    this.jsonDefaultField = config.jsonDefaultField;
+    if (typeof config !== constants.TYPE_OF.OBJECT || config === null) {
+      config = {};
+    }
+    this.json = typeof config.json === constants.TYPE_OF.BOOLEAN ? config.json : false;
   }
 
   /**
@@ -49,36 +55,49 @@ class Stringify {
     return obj;
   }
 
-  stringify (messages, callback) {
-    console.log("---");
+  /**
+   * @param {string} context
+   * @param {Array} messages
+   * @param {function} callback
+   */
+  stringify (context, messages, callback) {
     let self = this,
         combined = [];
 
-    async.each(messages, function b (message, cb) {
+    async.each(messages, function stringifyMessage (message, cb) {
       if (!self.json) {
-        combined.push(util.inspect(message));
-        return cb();
-      }
-
-      if (message !== null && typeof message === constants.TYPE_OF.OBJECT) {
-        if (message instanceof Error) {
-          message = self.errorToObject(message);
+        if (message === null || typeof message !== constants.TYPE_OF.OBJECT) {
+          combined.push(message + EMPTY);
+        } else {
+          combined.push(util.inspect(message));
         }
-
-        combined.push(CircularJSON.stringify(message));
         return cb();
       }
 
-      combined.push(message + EMPTY);
-      cb();
-    }, function () {
-      if (!self.json) {
-        return callback(combined.join(SPACE));
+      if (message === null || typeof message !== constants.TYPE_OF.OBJECT) {
+        message += EMPTY;
+      } else if (message instanceof Error) {
+        message = self.errorToObject(message);
       }
 
-      console.log(combined);
+      combined.push(message);
+      cb();
+    }, function stringifyFinish () {
+      let payload = '';
+      if (!self.json) {
+        if (context.length > 0) {
+          combined.unshift(context);
+        }
+        payload += combined.join(SPACE);
+      } else {
+        let payloadObj = {message: combined};
+        if (context.length > 0) {
+          payloadObj.context = context;
+        }
+        payload = CircularJSON.stringify(payloadObj);
+      }
 
-      callback("foo");
+      callback(payload);
     });
   }
 

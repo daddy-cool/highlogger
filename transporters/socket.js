@@ -3,9 +3,12 @@
 let AbstractTransporter = require('./abstract'),
     constants = require('../helpers/constants'),
     error = require('../helpers/error'),
-    Stringify = require('../helpers/stringify'),
     dgram = require('dgram');
 
+/**
+ * @class Socket
+ * @extends AbstractTransporter
+ */
 class Socket extends AbstractTransporter {
 
   /**
@@ -16,95 +19,75 @@ class Socket extends AbstractTransporter {
    * @param {number} [config.sizeLimit]
    */
   constructor (config) {
-    if (typeof config.sizeLimit === constants.TYPE_OF.UNDEFINED) {
-      config.sizeLimit = 512;
-    }
-
     super(config);
 
-    this.validate(config);
-
-    this
-        .setAddress(config.address)
-        .setPort(config.port)
-        .initSocket(config.method);
-
-    //noinspection JSUnresolvedVariable
-    this.stringify = new Stringify(config);
+    this.setAddress(config)
+        .setPort(config)
+        .initSocket(config);
   }
 
   /**
-   * @param {String} method
+   * @param {Object} config
+   * @param {Number} [config.sizeLimit]
    * @returns {Socket}
    */
-  initSocket (method) {
-    this.socket = dgram.createSocket(method);
+  setSizeLimit (config) {
+    if (!config.hasOwnProperty('sizeLimit')) {
+      config.sizeLimit = 512;
+    }
+    super.setSizeLimit(config);
 
     return this;
   }
 
   /**
-   * @param {string} [address]
+   * @param {Object} config
+   * @param {String} config.method
    * @returns {Socket}
    */
-  setAddress (address) {
-    this.address = address;
+  initSocket (config) {
+    if (typeof config.method !== constants.TYPE_OF.STRING || config.method !== 'udp4') {
+      throw new Error(error.config.invalidValue('method'));
+    }
+    this.socket = dgram.createSocket(config.method);
 
     return this;
   }
 
   /**
-   * @param {number} [port]
+   * @param {Object} config
+   * @param {String} config.address
    * @returns {Socket}
    */
-  setPort (port) {
-    //noinspection JSUnresolvedVariable
-    this.port = port;
+  setAddress (config) {
+    if (!config.hasOwnProperty('address') || typeof config.address !== constants.TYPE_OF.STRING) {
+      throw new Error(error.config.invalidValue('address'));
+    }
+    this.address = config.address;
 
     return this;
   }
 
   /**
-   * @param {Array} messages
-   * @param {number} severity
-   * @param {string} context
+   * @param {Object} config
+   * @param {Number} config.port
+   * @returns {Socket}
+   */
+  setPort (config) {
+    if (!config.hasOwnProperty('port') || typeof config.port !== constants.TYPE_OF.NUMBER) {
+      throw new Error(error.config.invalidValue('port'));
+    }
+    this.port = config.port;
+
+    return this;
+  }
+
+  /**
+   * @param {String} message
+   * @param {Number} severity
    * @param {Function} callback
    */
-  write (messages, severity, context, callback) {
-    let self = this;
-
-    this.stringify.stringify(context, messages, function socketStringify (message) {
-      if (message.length <= self.sizeLimit) {
-        return self.socketLog(message, callback);
-      }
-
-      if (!self.fallback) {
-        return self.stringify.stringify(
-          context,
-          [error.transporter.exceededSizeLimit(self.sizeLimit)],
-          function stringifyFallback (message2) {
-            self.socketLog(message2, callback);
-          }
-        );
-      }
-
-      self.fallback.write(messages, severity, context, function writeCb (e, fallbackMessage) {
-        let payload = [error.transporter.exceededSizeLimit(self.sizeLimit)];
-        if (typeof fallbackMessage !== constants.TYPE_OF.UNDEFINED) {
-          payload.push(fallbackMessage);
-        }
-        self.stringify.stringify(
-          context,
-          payload,
-          function stringifyFallback (message3) {
-            self.socketLog(message3, callback);
-          }
-        );
-      });
-    });
-  }
-
-  socketLog (message, callback) {
+  write (message, severity, callback) {
     let msgBuffer = new Buffer(message);
 
     this.socket.send(
@@ -115,26 +98,6 @@ class Socket extends AbstractTransporter {
       this.address,
       callback
     );
-  }
-
-  /**
-   * @param {object} config
-   * @param {string} config.address
-   * @param {number} config.port
-   * @param {string} config.method
-   */
-  validate (config) {
-    if (typeof config.address !== constants.TYPE_OF.STRING) {
-      throw new Error(error.config.invalidValue('address'));
-    }
-
-    if (typeof config.port !== constants.TYPE_OF.NUMBER) {
-      throw new Error(error.config.invalidValue('port'));
-    }
-
-    if (typeof config.method !== constants.TYPE_OF.STRING || config.method !== 'udp4') {
-      throw new Error(error.config.invalidValue('method'));
-    }
   }
 }
 

@@ -114,7 +114,7 @@ describe('transporter console', function () {
     });
 
     describe('debug', function () {
-      it('should prepend debubKey on severity debug', function (done) {
+      it('should prepend context', function (done) {
         let message = 'foobarMessage',
             debugKey = 'foobarDebugKey',
             writableOutputStream = new stream.Writable({
@@ -124,37 +124,14 @@ describe('transporter console', function () {
               }
             }),
             consoleTransporter = new ConsoleTransporter({
-              stream: writableOutputStream,
+              stdout: writableOutputStream,
               colors: false
             });
 
-        consoleTransporter.write(message, {
-          debugKey: debugKey,
-          severity: SHARED_CONSTANTS.SEVERITY.debug
-        }, function () {});
+        consoleTransporter.write([message], SHARED_CONSTANTS.SEVERITY.debug, debugKey, function () {});
       });
 
-      it('should not prepend debugKey on any severity that is not debug', function (done) {
-        let message = 'foobarMessage',
-            debugKey = 'foobarDebugKey',
-            writableOutputStream = new stream.Writable({
-              write: function (chunk) {
-                assert.equal(chunk.toString(), message + '\n');
-                done();
-              }
-            }),
-            consoleTransporter = new ConsoleTransporter({
-              stream: writableOutputStream,
-              colors: false
-            });
-
-        consoleTransporter.write(message, {
-          debugKey: debugKey,
-          severity: SHARED_CONSTANTS.SEVERITY.info
-        }, function () {});
-      });
-
-      it('should remember color for each debugKey', function (done) {
+      it('should remember color for each context', function (done) {
         let tests = {
               msg1: {
                 key: 'debugKey1',

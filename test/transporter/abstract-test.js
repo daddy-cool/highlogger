@@ -15,12 +15,9 @@ describe('transporter abstract', function () {
     });
 
     it('should set custom severity', function () {
-      let severity = {
-            minimum: 'crit',
-            maximum: 'info'
-          },
-          abstractTransporter = new AbstractTransporter({
-            severity: severity
+      let abstractTransporter = new AbstractTransporter({
+            severityMin: 'crit',
+            severityMax: 'info'
           });
 
       assert.equal(abstractTransporter.severity.minimum, SHARED_CONSTANTS.SEVERITY.crit);

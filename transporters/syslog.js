@@ -4,7 +4,6 @@ let moment = require('moment'),
     Socket = require('./socket'),
     constants = require('../helpers/constants'),
     error = require('../helpers/error'),
-    Stringify = require('../helpers/stringify'),
     osHostname = require('os').hostname(),
     path = require('path');
 
@@ -64,111 +63,181 @@ function filterPrintUsASCII (str, maxLength) {
   return NIL;
 }
 
+/**
+ * @class Syslog
+ * @extends Socket
+ */
 class Syslog extends Socket {
 
   /**
    * @param {Object} config
-   * @param {boolean} [config.json]
-   * @param {string} [config.address]
-   * @param {number} [config.port]
-   * @param {string} [config.method]
-   * @param {number} [config.facility]
-   * @param {string} [config.hostname]
-   * @param {string} [config.appName]
-   * @param {string} [config.processId]
-   * @param {number} [config.timezoneOffset]
-   * @param {string} [config.dateFormat]
    */
   constructor (config) {
-    if (typeof config.address !== constants.TYPE_OF.STRING) {
+    super(config);
+
+    this.setFacility(config)
+        .setHostname(config)
+        .setAppName(config)
+        .setProcessId(config)
+        .setTimezoneOffset(config)
+        .setSyslogSizeLimit();
+  }
+
+  /**
+   * @param {Object} config
+   * @param {String} config.address
+   * @returns {Syslog}
+   */
+  setAddress (config) {
+    if (!config.hasOwnProperty('address')) {
       config.address = '127.0.0.1';
     }
+    super.setAddress(config);
 
-    if (typeof config.port !== constants.TYPE_OF.NUMBER) {
+    return this;
+  }
+
+  /**
+   * @param {Object} config
+   * @param {Number} config.port
+   * @returns {Syslog}
+   */
+  setPort (config) {
+    if (!config.hasOwnProperty('port')) {
       config.port = 514;
     }
+    super.setPort(config);
 
-    if (typeof config.method !== constants.TYPE_OF.STRING) {
+    return this;
+  }
+
+  /**
+   * @param {Object} config
+   * @param {String} config.method
+   * @returns {Syslog}
+   */
+  initSocket (config) {
+    if (!config.hasOwnProperty('method')) {
       config.method = 'udp4';
     }
-
-    let json = typeof config.json === constants.TYPE_OF.BOOLEAN ? config.json : false;
-    config.json = false;
-    super(config);
-    config.json = json;
-    this.stringifySyslog = new Stringify(config);
-
-    this.validate(config);
-
-    this.setFacility(config.facility)
-        .setHostname(config.hostname)
-        .setAppName(config.appName)
-        .setProcessId(config.processId)
-        .setTimezoneOffset(config.timezoneOffset);
-  }
-
-  /**
-   * @param {number} [facility]
-   * @returns {Syslog}
-   */
-  setFacility (facility) {
-    this.facility = 8 * (typeof FACILITY[facility] === constants.TYPE_OF.NUMBER ? FACILITY[facility] : FACILITY.user);
+    super.initSocket(config);
 
     return this;
   }
 
   /**
-   * @param {string} [hostname]
    * @returns {Syslog}
    */
-  setHostname (hostname) {
-    this.hostname = filterPrintUsASCII(hostname || osHostname, 255);
+  setSyslogSizeLimit () {
+    this.sizeLimit -= this.getSyslogPrefix(constants.SEVERITY.debug).length;
 
     return this;
   }
 
   /**
-   * @param {string} [appName]
+   * @param {Object} config
+   * @param {Number} [config.facility]
    * @returns {Syslog}
    */
-  setAppName (appName) {
-    let appDir = path.dirname(require.main.filename),
-        packageJson = path.join(appDir, 'package.json'),
-        defaultName;
+  setFacility (config) {
+    let facility = FACILITY.user;
 
-    try {
-      defaultName = require(packageJson).name.split('/').pop();
-    } catch (err) {
-      defaultName = NIL;
+    if (config.hasOwnProperty('facility')) {
+      if (typeof FACILITY[config.facility] !== constants.TYPE_OF.NUMBER) {
+        throw new Error(error.config.invalidValue('facility'));
+      }
+      facility = FACILITY[config.facility];
     }
 
-    this.appName = filterPrintUsASCII(appName || defaultName, 48);
+    this.facility = 8 * facility;
 
     return this;
   }
 
   /**
-   * @param {string} [processId]
+   * @param {Object} config
+   * @param {String} [config.hostname]
    * @returns {Syslog}
    */
-  setProcessId (processId) {
-    this.processId = filterPrintUsASCII(processId || process.pid, 128);
+  setHostname (config) {
+    let hostname = osHostname;
 
-    return this;
-  }
-
-  /**
-   * @param {number} [timezoneOffset]
-   * @returns {Syslog}
-   */
-  setTimezoneOffset (timezoneOffset) {
-    if (typeof timezoneOffset !== constants.TYPE_OF.NUMBER || timezoneOffset < -16 || timezoneOffset > 16) {
-      //noinspection JSUnresolvedFunction
-      this.timezoneOffset = moment().utcOffset();
-      return this;
+    if (config.hasOwnProperty('hostname')) {
+      if (typeof config.hostname !== constants.TYPE_OF.STRING) {
+        throw new Error(error.config.invalidValue('hostname'));
+      }
+      hostname = config.hostname;
     }
 
-    this.timezoneOffset = timezoneOffset;
+    this.hostname = filterPrintUsASCII(hostname, 255);
+
+    return this;
+  }
+
+  /**
+   * @param {Object} config
+   * @param {String} [config.appName]
+   * @returns {Syslog}
+   */
+  setAppName (config) {
+    let appName = NIL;
+
+    if (config.hasOwnProperty('appName')) {
+      if (typeof config.appName !== constants.TYPE_OF.STRING) {
+        throw new Error(error.config.invalidValue('appName'));
+      }
+      appName = config.appName;
+    } else {
+      let appDir = path.dirname(require.main.filename),
+          packageJson = path.join(appDir, 'package.json');
+
+      try {
+        appName = require(packageJson).name.split('/').pop();
+      } catch (e) {
+        //do nothing
+      }
+    }
+
+    this.appName = filterPrintUsASCII(appName, 48);
+
+    return this;
+  }
+
+  /**
+   * @param {Object} config
+   * @param {String} [config.processId]
+   * @returns {Syslog}
+   */
+  setProcessId (config) {
+    let processId = process.pid;
+
+    if (config.hasOwnProperty('processId')) {
+      if (typeof config.processId !== constants.TYPE_OF.STRING && typeof config.processId !== constants.TYPE_OF.NUMBER) {
+        throw new Error(error.config.invalidValue('processId'));
+      }
+      processId = config.processId;
+    }
+
+    this.processId = filterPrintUsASCII(processId + EMPTY, 128);
+
+    return this;
+  }
+
+  /**
+   * @param {Object} config
+   * @param {Number} [config.timezoneOffset]
+   * @returns {Syslog}
+   */
+  setTimezoneOffset (config) {
+    //noinspection JSUnresolvedFunction
+    this.timezoneOffset = moment().utcOffset();
+
+    if (config.hasOwnProperty('timezoneOffset')) {
+      if (typeof config.timezoneOffset !== constants.TYPE_OF.NUMBER || config.timezoneOffset < -16 || config.timezoneOffset > 16) {
+        throw new Error(error.config.invalidValue('timezoneOffset'));
+      }
+      this.timezoneOffset = config.timezoneOffset;
+    }
 
     return this;
   }
@@ -185,61 +254,27 @@ class Syslog extends Socket {
     return PRI_START + (this.facility + severity) + PRI_END;
   }
 
+  getSyslogPrefix (severity) {
+    //noinspection JSUnresolvedFunction
+    return [
+      this.getPriority(severity) + VERSION,
+      moment().utcOffset(this.timezoneOffset).format(DATE_FORMAT),
+      this.hostname,
+      this.appName,
+      this.processId,
+      this.filterMessageId(),
+      NIL,
+      EMPTY
+    ].join(SPACE);
+  }
+
   /**
-   * @param {Array} messages
-   * @param {number} severity
-   * @param {string} context
+   * @param {String} message
+   * @param {Number} severity
    * @param {Function} callback
    */
-  write (messages, severity, context, callback) {
-    //noinspection JSUnresolvedFunction
-    let self = this,
-        syslogPrefixes = [
-          this.getPriority(severity) + VERSION,
-          moment().utcOffset(this.timezoneOffset).format(DATE_FORMAT),
-          this.hostname,
-          this.appName,
-          this.processId,
-          this.filterMessageId(context),
-          NIL
-        ].join(SPACE);
-
-    self.stringifySyslog.stringify(EMPTY, messages, function syslogStringify (message) {
-      if ((syslogPrefixes + SPACE + message).length <= self.sizeLimit) {
-        return self.socketLog(syslogPrefixes + SPACE + message, callback);
-      }
-
-      let fallbackMessages = [error.transporter.exceededSizeLimit(self.sizeLimit)];
-      if (!self.fallback) {
-        return self.fallbackSyslog(syslogPrefixes, fallbackMessages, callback);
-      }
-
-      self.fallback.write(messages, severity, context, function writeCb (e, fallbackMessage) {
-        if (typeof fallbackMessage !== constants.TYPE_OF.UNDEFINED) {
-          fallbackMessages.push(fallbackMessage);
-        }
-        self.fallbackSyslog(syslogPrefixes, fallbackMessages, callback);
-      });
-    });
-  }
-
-  fallbackSyslog (syslogPrefixes, payload, callback) {
-    let self = this;
-
-    this.stringifySyslog.stringify(
-      EMPTY,
-      payload,
-      function syslogStringifyFallback (message) {
-        self.socketLog(syslogPrefixes + SPACE + message, callback);
-      }
-    );
-  }
-
-  /**
-   * @param {object} config
-   */
-  validate (config) {
-
+  write (message, severity, callback) {
+    super.write(this.getSyslogPrefix(severity) + message, severity, callback);
   }
 }
 

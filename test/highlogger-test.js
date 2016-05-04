@@ -8,6 +8,8 @@ let Highlogger = require('../lib/highlogger'),
     async = require('async'),
     dgram = require('dgram');
 
+process.env.SUPPRESS_NO_CONFIG_WARNING = true;
+
 let constants = require('../lib/helpers/constants');
 
 describe('Highlogger', function () {
@@ -92,6 +94,7 @@ describe('Highlogger', function () {
     describe('severity types', function () {
       let facilityName = 'sec',
           debug,
+          context = 'foobarContext',
           facility = 10,
           port,
           port2,
@@ -161,6 +164,10 @@ describe('Highlogger', function () {
               ]),
               doneCount = 0;
 
+          highLogger.getContext = function () {
+            return context;
+          };
+
           function doneWait () {
             doneCount++;
             if (doneCount === 2) {
@@ -171,14 +178,16 @@ describe('Highlogger', function () {
           socket.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[7], message+test[0]);
+            assert.equal(messageSplitArray[7], context);
+            assert.equal(messageSplitArray[8], message+test[0]);
             doneWait();
           });
 
           socket2.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[7], message+test[0]);
+            assert.equal(messageSplitArray[7], context);
+            assert.equal(messageSplitArray[8], message+test[0]);
             doneWait();
           });
 
@@ -231,6 +240,7 @@ describe('Highlogger', function () {
 
     describe('json', function () {
       let port,
+          context = 'foobarContext',
           socket;
 
       beforeEach(function (done) {
@@ -254,9 +264,13 @@ describe('Highlogger', function () {
         let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
             message = 'foobar';
 
+        highLogger.getContext = function () {
+          return context;
+        };
+
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], JSON.stringify({message:[message]}));
+          assert.equal(messageSplitArray[7], JSON.stringify({message:message, context: context}));
           done();
         });
 
@@ -267,9 +281,14 @@ describe('Highlogger', function () {
         let highLogger = new Highlogger([{type: 'syslog', port: port, json: false}]),
             message = 'foobar';
 
+        highLogger.getContext = function () {
+          return context;
+        };
+
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], message);
+          assert.equal(messageSplitArray[7], context);
+          assert.equal(messageSplitArray[8], message);
           done();
         });
 
@@ -284,14 +303,22 @@ describe('Highlogger', function () {
             highLogger = new Highlogger(),
             highLogger2;
 
+        highLogger.getContext = function () {
+          return 'foo';
+        };
+
         process.env.DEBUG = 'bar';
         highLogger2 = new Highlogger();
 
+        highLogger2.getContext = function () {
+          return 'bar';
+        };
+
         assert.equal(typeof highLogger.getDebug(), 'function');
         assert.equal(highLogger.getDebug().name, 'emptyDebug');
-        assert.equal(highLogger.getDebug()(), undefined);
+        assert.equal(highLogger.getDebug("foobar").name, 'emptyDebug');
         assert.equal(typeof highLogger.getDebug('foo'), 'function');
-        assert.equal(highLogger.getDebug('foo')(), undefined);
+        assert.equal(highLogger.getDebug('foo'), undefined);
         assert.equal(highLogger2.getDebug('foo').name, 'emptyDebug');
 
         process.env.DEBUG = debug;

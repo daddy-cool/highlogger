@@ -1,35 +1,39 @@
+'use strict';
+let Debug = require('../lib/debug'),
+    assert = require('assert');
+
 describe('debug', function () {
   it('should set default debugKeys', function () {
-    let highLogger = new Highlogger();
-    assert.deepEqual(highLogger.debugKeys.include, []);
-    assert.deepEqual(highLogger.debugKeys.exclude, []);
+    let debug = new Debug();
+    assert.deepEqual(debug.included, []);
+    assert.deepEqual(debug.excluded, []);
   });
 
   it('should not set invalid debugKeys', function () {
-    let debug = process.env.DEBUG,
-      highLogger, highLogger2, highLogger3, highLogger4;
+    let debugEnv = process.env.DEBUG,
+        debug, debug2, debug3, debug4;
 
     process.env.DEBUG = '';
-    highLogger = new Highlogger();
+    debug = new Debug();
 
     delete process.env.DEBUG;
-    highLogger2 = new Highlogger();
+    debug2 = new Debug();
 
     process.env.DEBUG = 'a, c, -b, -d';
-    highLogger3 = new Highlogger();
+    debug3 = new Debug();
 
     process.env.DEBUG = '*,   ';
-    highLogger4 = new Highlogger();
+    debug4 = new Debug();
 
-    assert.deepEqual(highLogger.debugKeys.include, []);
-    assert.deepEqual(highLogger.debugKeys.exclude, []);
-    assert.deepEqual(highLogger2.debugKeys.include, []);
-    assert.deepEqual(highLogger2.debugKeys.exclude, []);
-    assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^c$'), new RegExp('^a$')]);
-    assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^d$'), new RegExp('^b$')]);
-    assert.deepEqual(highLogger4.debugKeys.include, [/^.*$/]);
-    assert.deepEqual(highLogger4.debugKeys.exclude, []);
+    assert.deepEqual(debug.included, []);
+    assert.deepEqual(debug.excluded, []);
+    assert.deepEqual(debug2.included, []);
+    assert.deepEqual(debug2.excluded, []);
+    assert.deepEqual(debug3.included, [new RegExp('^c$'), new RegExp('^a$')]);
+    assert.deepEqual(debug3.excluded, [new RegExp('^d$'), new RegExp('^b$')]);
+    assert.deepEqual(debug4.included, [/^.*$/]);
+    assert.deepEqual(debug4.excluded, []);
 
-    process.env.DEBUG = debug;
+    process.env.DEBUG = debugEnv;
   });
 });

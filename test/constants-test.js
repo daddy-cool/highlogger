@@ -2,7 +2,7 @@
 
 let assert = require('assert');
 
-let constants = require('../helpers/constants');
+let constants = require('../lib/helpers/constants');
 
 describe('constants', function () {
   it('should have correct object types', function () {

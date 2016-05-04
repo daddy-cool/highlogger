@@ -1,14 +1,14 @@
 'use strict';
 
 let Highlogger = require('../lib/highlogger'),
-    ConsoleTransporter = require('../transporters/console'),
-    SocketTransporter = require('../transporters/socket'),
-    SyslogTransporter = require('../transporters/syslog'),
+    ConsoleTransporter = require('../lib/transporters/console'),
+    SocketTransporter = require('../lib/transporters/socket'),
+    SyslogTransporter = require('../lib/transporters/syslog'),
     assert = require('assert'),
     async = require('async'),
     dgram = require('dgram');
 
-let constants = require('../helpers/constants');
+let constants = require('../lib/helpers/constants');
 
 describe('Highlogger', function () {
 

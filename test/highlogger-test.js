@@ -318,7 +318,6 @@ describe('Highlogger', function () {
         assert.equal(highLogger.getDebug().name, 'emptyDebug');
         assert.equal(highLogger.getDebug("foobar").name, 'emptyDebug');
         assert.equal(typeof highLogger.getDebug('foo'), 'function');
-        assert.equal(highLogger.getDebug('foo'), undefined);
         assert.equal(highLogger2.getDebug('foo').name, 'emptyDebug');
 
         process.env.DEBUG = debug;
@@ -346,10 +345,8 @@ describe('Highlogger', function () {
 
         assert.equal(typeof highLogger.getDebug('ffffbar'), 'function');
         assert.equal(highLogger.getDebug('ffffbar').name, 'debugWithContext');
-        assert.equal(highLogger.getDebug('ffffbar')(), undefined);
         assert.equal(typeof highLogger.getDebug('barfoobar'), 'function');
         assert.equal(highLogger.getDebug('barfoobar').name, 'emptyDebug');
-        assert.equal(highLogger.getDebug('barfoobar')(), undefined);
 
         process.env.DEBUG = debug;
       });
@@ -374,7 +371,7 @@ describe('Highlogger', function () {
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[5], debugKey);
+          assert.equal(messageSplitArray[7], debugKey);
           assert.equal(messageSplitArray[0], '<' + (10*8+constants.SEVERITY.debug) + '>1');
 
           process.env.DEBUG = debug;

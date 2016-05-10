@@ -1,8 +1,8 @@
 'use strict';
 
-let AbstractTransporter = require('../../lib/transporters/abstract'),
+let Abstract = require('../../lib/transporters/abstract'),
     assert = require('assert'),
-    defaultAbstract = new AbstractTransporter({}),
+    defaultAbstract = new Abstract({}),
     constants = require('../../lib/helpers/constants');
 
 describe('transporter abstract', function () {
@@ -17,9 +17,9 @@ describe('transporter abstract', function () {
       });
 
       it('should set custom severity', function () {
-        let abstract0 = new AbstractTransporter({severityMin: 'crit'}),
-            abstract1 = new AbstractTransporter({severityMax: 'crit'}),
-            abstract2 = new AbstractTransporter({severityMin: 'crit', severityMax: 'info'});
+        let abstract0 = new Abstract({severityMin: 'crit'}),
+            abstract1 = new Abstract({severityMax: 'crit'}),
+            abstract2 = new Abstract({severityMin: 'crit', severityMax: 'info'});
 
         assert.equal(abstract0.severity.minimum, constants.SEVERITY.crit);
         assert.equal(abstract0.severity.maximum, constants.SEVERITY.debug);
@@ -33,10 +33,29 @@ describe('transporter abstract', function () {
 
       it('should throw on invalid severity', function () {
         assert.throws(function () {
-          new AbstractTransporter({severityMin: 'foo'});
+          new Abstract({severityMin: 'foo'});
         });
         assert.throws(function () {
-          new AbstractTransporter({severityMax: 'bar'});
+          new Abstract({severityMax: 'bar'});
+        });
+      });
+
+    });
+
+    describe('json', function () {
+
+      it('should set default json', function () {
+        assert.equal(defaultAbstract.json, false);
+      });
+
+      it('should set custom json', function () {
+        let abstract = new Abstract({json: true});
+        assert.equal(abstract.json, true);
+      });
+
+      it('should throw on invalid json', function () {
+        assert.throws(function () {
+          new Abstract({json: 'foo'});
         });
       });
 
@@ -49,13 +68,13 @@ describe('transporter abstract', function () {
       });
 
       it('should set custom sizeLimit', function () {
-        let abstract = new AbstractTransporter({sizeLimit: 1});
+        let abstract = new Abstract({sizeLimit: 1});
         assert.equal(abstract.sizeLimit, 1);
       });
 
       it('should throw on invalid sizeLimit', function () {
         assert.throws(function () {
-          new AbstractTransporter({sizeLimit: 'foo'});
+          new Abstract({sizeLimit: 'foo'});
         });
       });
 
@@ -68,13 +87,13 @@ describe('transporter abstract', function () {
       });
 
       it('should set custom fallback', function () {
-        let abstract = new AbstractTransporter({fallbackTransporter: new AbstractTransporter({})});
-        assert.ok(abstract.fallbackTransporter instanceof AbstractTransporter);
+        let abstract = new Abstract({fallbackTransporter: new Abstract({})});
+        assert.ok(abstract.fallbackTransporter instanceof Abstract);
       });
 
       it('should throw on invalid fallback', function () {
         assert.throws(function () {
-          new AbstractTransporter({fallbackTransporter: "foo"});
+          new Abstract({fallbackTransporter: "foo"});
         });
       });
 
@@ -85,7 +104,7 @@ describe('transporter abstract', function () {
   describe('log', function () {
 
     it('should call write as default', function (done) {
-      let abstract = new AbstractTransporter({});
+      let abstract = new Abstract({});
 
       abstract.write = function (message, severity, callback) {
         callback();
@@ -95,7 +114,7 @@ describe('transporter abstract', function () {
     });
 
     it('should call fallback on exceeded sizeLimit', function (done) {
-      let abstract = new AbstractTransporter({sizeLimit: 1});
+      let abstract = new Abstract({sizeLimit: 1});
 
       abstract.fallback = function (message, severity, callback) {
         callback();
@@ -109,8 +128,8 @@ describe('transporter abstract', function () {
   describe('fallback', function () {
 
     it('should call write and fallback', function (done) {
-      let fallbackTransporter = new AbstractTransporter({}),
-          abstractTransporter = new AbstractTransporter({sizeLimit: 1, fallbackTransporter: fallbackTransporter});
+      let fallbackTransporter = new Abstract({}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter});
 
       fallbackTransporter.write = function (message, severity, callback) {
         assert.equal(message, 'bar foo');
@@ -124,8 +143,8 @@ describe('transporter abstract', function () {
     });
 
     it('should call write and fallback & JSON', function (done) {
-      let fallbackTransporter = new AbstractTransporter({}),
-          abstractTransporter = new AbstractTransporter({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true});
+      let fallbackTransporter = new Abstract({}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true});
 
       fallbackTransporter.write = function (message, severity, callback) {
         assert.equal(message, 'bar foo');
@@ -139,8 +158,8 @@ describe('transporter abstract', function () {
     });
 
     it('should call write and fallback with fallbackMessage', function (done) {
-      let fallbackTransporter = new AbstractTransporter({}),
-          abstractTransporter = new AbstractTransporter({sizeLimit: 1, fallbackTransporter: fallbackTransporter});
+      let fallbackTransporter = new Abstract({}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter});
 
       fallbackTransporter.write = function (message, severity, callback) {
         assert.equal(message, 'bar foo');
@@ -154,8 +173,8 @@ describe('transporter abstract', function () {
     });
 
     it('should call write and fallback with fallbackMessage & JSON', function (done) {
-      let fallbackTransporter = new AbstractTransporter({}),
-          abstractTransporter = new AbstractTransporter({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true});
+      let fallbackTransporter = new Abstract({}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true});
 
       fallbackTransporter.write = function (message, severity, callback) {
         assert.equal(message, 'bar foo');

@@ -1,6 +1,6 @@
 'use strict';
 
-let AbstractTransporter = require('../../lib/transporters/abstract'),
+let Abstract = require('../../lib/transporters/abstract'),
     Console = require('../../lib/transporters/console'),
     assert = require('assert'),
     chalk = require('chalk'),
@@ -10,8 +10,8 @@ describe('transporter console', function () {
 
   describe('constructor', function () {
 
-    it('should extend AbstractTransporter', function () {
-      assert.ok(defaultConsole instanceof AbstractTransporter);
+    it('should extend Abstract', function () {
+      assert.ok(defaultConsole instanceof Abstract);
     });
 
     describe('colors', function () {

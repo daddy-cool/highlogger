@@ -1,178 +1,106 @@
 'use strict';
 
-let AbstractTransporter = require('../../lib/transporters/abstract'),
-    SocketTransporter = require('../../lib/transporters/socket'),
+let Abstract = require('../../lib/transporters/abstract'),
+    Socket = require('../../lib/transporters/socket'),
     assert = require('assert'),
-    dgram = require('dgram');
-
-const SHARED_CONSTANTS = require('../../lib/helpers/constants');
+    constants = require('../../lib/helpers/constants'),
+    dgram = require('dgram'),
+    defaultSocket = new Socket({address: '127.0.0.1', port: 514, method: 'udp4'});
 
 describe('transporter socket', function () {
-  it('should inherit from AbstractTransporter', function () {
-    let socketTransporter = new SocketTransporter({
-      method: 'udp4',
-      address: '127.0.0.1',
-      port: 514
+
+  describe('constructor', function () {
+
+    it('should extend Abstract', function () {
+      assert.ok(defaultSocket instanceof Abstract);
     });
 
-    assert.ok(socketTransporter instanceof AbstractTransporter);
+    describe('sizeLimit', function () {
+
+      it('should set default sizeLimit', function () {
+        assert.equal(defaultSocket.sizeLimit, 512);
+      });
+
+      it('should set custom sizeLimit', function () {
+        let abstract = new Socket({address: '127.0.0.1', port: 514, method: 'udp4', sizeLimit: 1});
+        assert.equal(abstract.sizeLimit, 1);
+      });
+
+      it('should throw on invalid sizeLimit', function () {
+        assert.throws(function () {
+          new Socket({address: '127.0.0.1', port: 514, method: 'udp4', sizeLimit: 'foo'});
+        });
+      });
+
+    });
+
+    describe('address', function () {
+
+      it('should set custom address', function () {
+        assert.equal(new Socket({address: '192.168.99.100', port: 514, method: 'udp4'}).address, '192.168.99.100');
+      });
+
+      it('should throw on invalid address', function () {
+        assert.throws(function () {
+          new Socket({address: true, port: 514, method: 'udp4'});
+        });
+      });
+
+    });
+
+    describe('port', function () {
+
+      it('should set custom port', function () {
+        assert.equal(new Socket({address: '192.168.99.100', port: 777, method: 'udp4'}).port, 777);
+      });
+
+      it('should throw on invalid port', function () {
+        assert.throws(function () {
+          new Socket({address: '192.168.99.100', port: true, method: 'udp4'});
+        });
+      });
+
+    });
+
+    describe('method', function () {
+
+      it('should set custom method', function () {
+        assert.equal(new Socket({address: '192.168.99.100', port: 777, method: 'udp4'}).socket.type, 'udp4');
+      });
+
+      it('should throw on invalid method', function () {
+        assert.throws(function () {
+          new Socket({address: '192.168.99.100', port: 777, method: 'foobar'});
+        });
+      });
+
+    });
+
   });
 
-  describe('set socket', function () {
-    it('should initialize udp4 socket', function () {
-      let socketTransporter = new SocketTransporter({
+  it('should write to socket', function (done) {
+    let receiver = dgram.createSocket('udp4'),
+        message = 'foobar';
+
+    receiver.on("error", function (err) {
+      assert.ifError(err);
+      receiver.close(done);
+    });
+
+    receiver.on("message", function (msg) {
+      assert.equal(msg.toString(), message);
+      receiver.close(done);
+    });
+
+    receiver.bind(null, function () {
+      let sender = new Socket({
+        port: receiver.address().port,
         method: 'udp4',
-        address: '127.0.0.1',
-        port: 514
+        address: '127.0.0.1'
       });
 
-      assert.ok(typeof socketTransporter.socket !== 'undefined');
-    });
-
-    it('should not initialize without socket', function () {
-      function invalidSocket () {
-        new SocketTransporter({
-          address: '127.0.0.1',
-          port: 514
-        });
-      }
-
-      assert.throws(invalidSocket);
+      sender.write(message, 0, function () {});
     });
   });
 
-  describe('set address', function () {
-    it('should set an address', function () {
-      let customAddress = '192.168.178.1',
-          socketTransporter = new SocketTransporter({
-            address: customAddress,
-            port: 514,
-            method: 'udp4'
-          });
-
-      assert.equal(socketTransporter.address, customAddress);
-    });
-
-    it('should not set a non-string address', function () {
-      let customAddress = new Buffer('test');
-
-      function invalidSocket () {
-        new SocketTransporter({
-          address: customAddress,
-          method: 'udp4',
-          port: 512
-        });
-      }
-
-      assert.throws(invalidSocket);
-    });
-  });
-
-  describe('set port', function () {
-
-    it('should set a custom port', function () {
-      let customPort = 22,
-          socketTransporter = new SocketTransporter({
-            port: customPort,
-            method: 'udp4',
-            address: '127.0.0.1'
-          });
-
-      assert.equal(socketTransporter.port, customPort);
-    });
-
-    it('should not set a non-numerical port', function () {
-      let customPort = '22';
-
-      function invalidSocket () {
-        new SocketTransporter({
-          port: customPort,
-          method: 'udp4',
-          address: '127.0.0.1'
-        });
-      }
-
-      assert.throws(invalidSocket);
-    });
-  });
-
-  describe('write', function () {
-    it('should write', function (done) {
-      let socket = dgram.createSocket('udp4'),
-          message = 'foobar';
-
-      socket.on("error", function (err) {
-        assert.ifError(err);
-        socket.close(done);
-      });
-
-      socket.on("message", function (msg) {
-        assert.equal(msg.toString(), message);
-        socket.close(done);
-      });
-
-      socket.bind(null, function () {
-        let socketTransporter = new SocketTransporter({
-          port: socket.address().port,
-          method: 'udp4',
-          address: '127.0.0.1'
-        });
-
-        socketTransporter.write(message);
-      });
-    });
-
-    it('should only prepend debugKey on severity debug', function (done) {
-      let socket = dgram.createSocket('udp4'),
-          message = 'foobarMessage',
-          debugKey = 'foobarDebugKey',
-          debugRequest = false,
-          infoRequest = false,
-          triedDone = 0;
-
-      function tryDone () {
-        triedDone++;
-        if (triedDone === 2) {
-          assert.ok(debugRequest);
-          assert.ok(infoRequest);
-          socket.close(done);
-        }
-      }
-
-      socket.on("error", function (err) {
-        assert.ifError(err);
-        socket.close(done);
-      });
-
-      socket.on("message", function (msg) {
-        msg = msg.toString();
-        if (msg === debugKey + ' ' + message) {
-          assert.equal(msg, debugKey + ' ' + message);
-          debugRequest = true;
-        } else {
-          assert.equal(msg, message);
-          infoRequest = true;
-        }
-
-        tryDone(socket);
-      });
-
-      socket.bind(null, function () {
-        let socketTransporter = new SocketTransporter({
-          method: 'udp4',
-          address: '127.0.0.1',
-          port: socket.address().port
-        });
-
-        socketTransporter.write(message, {
-          debugKey: debugKey,
-          severity: SHARED_CONSTANTS.SEVERITY.debug
-        });
-
-        socketTransporter.write(message, {
-          debugKey: debugKey
-        });
-      });
-    });
-  });
 });

@@ -1,8 +1,7 @@
 'use strict';
 
-let assert = require('assert');
-
-let constants = require('../lib/helpers/constants');
+let assert = require('assert'),
+    constants = require('../../lib/helpers/constants');
 
 describe('constants', function () {
   it('should have correct object types', function () {

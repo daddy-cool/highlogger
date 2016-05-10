@@ -1,199 +1,190 @@
 'use strict';
 
 let AbstractTransporter = require('../../lib/transporters/abstract'),
-    ConsoleTransporter = require('../../lib/transporters/console'),
+    Console = require('../../lib/transporters/console'),
     assert = require('assert'),
-    chalk = new (require('chalk')).constructor({enabled: true}),
-    stream = require('stream');
-
-const SHARED_CONSTANTS = require('../../lib/helpers/constants');
+    chalk = require('chalk'),
+    defaultConsole = new Console({});
 
 describe('transporter console', function () {
-  it('should inherit from AbstractTransporter', function () {
-    let consoleTransporter = new ConsoleTransporter({});
 
-    assert.ok(consoleTransporter instanceof AbstractTransporter);
-  });
+  describe('constructor', function () {
 
-  describe('write', function () {
-    it('should write any severity to output without colors', function (done) {
-      let message = 'foobar',
-          doneCounter = 0,
-          doneWait = function doneW (next) {
-            doneCounter++;
-            if (doneCounter === 3) {
-              return done();
-            }
-            next();
-          },
-          writableOutputStream = new stream.Writable({
-            write: function (chunk, encoding, next) {
-              assert.equal(chunk.toString(), message + '\n');
-              doneWait(next);
-            }
-          }),
-          consoleTransporter = new ConsoleTransporter({
-            stream: writableOutputStream,
-            colors: false
-          }),
-          cb = function () {};
-
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.error}, cb);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.warn}, cb);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.notice}, cb);
+    it('should extend AbstractTransporter', function () {
+      assert.ok(defaultConsole instanceof AbstractTransporter);
     });
 
-    it('should write emerg/crit/error severity to output with red color', function (done) {
-      let message = 'foobar',
-          doneCounter = 0,
-          doneWait = function doneW (next) {
-            doneCounter++;
-            if (doneCounter === 3) {
-              return done();
-            }
-            next();
-          },
-          writableOutputStream = new stream.Writable({
-            write: function (chunk, encoding, next) {
-              assert.equal(chunk.toString(), '\u001b[31m' + message + '\u001b[39m\n');
-              doneWait(next);
-            }
-          }),
-          consoleTransporter = new ConsoleTransporter({
-            stream: writableOutputStream,
-            colors: true
-          }),
-          cb = function () {};
+    describe('colors', function () {
 
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.emerg}, cb);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.crit}, cb);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.error}, cb);
-    });
-
-    it('should write warning severity to output with yellow color', function (done) {
-      let message = 'foobar',
-          writableOutputStream = new stream.Writable({
-            write: function (chunk) {
-              assert.equal(chunk.toString(), '\u001b[33m' + message + '\u001b[39m\n');
-              done();
-            }
-          }),
-          consoleTransporter = new ConsoleTransporter({
-            stream: writableOutputStream,
-            colors: true
-          });
-
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.warn}, function () {});
-    });
-
-    it('should write notice/info/debug severity to output without color', function (done) {
-      let message = 'foobar',
-          doneCounter = 0,
-          doneWait = function doneW (next) {
-            doneCounter++;
-            if (doneCounter === 3) {
-              return done();
-            }
-            next();
-          },
-          writableOutputStream = new stream.Writable({
-            write: function (chunk, encoding, next) {
-              assert.equal(chunk.toString(), message + '\n');
-              doneWait(next);
-            }
-          }),
-          consoleTransporter = new ConsoleTransporter({
-            stream: writableOutputStream,
-            colors: true
-          }),
-          cb = function () {};
-
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.notice}, cb);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.info}, cb);
-      consoleTransporter.write(message, {severity: SHARED_CONSTANTS.SEVERITY.debug}, cb);
-    });
-
-    describe('debug', function () {
-      it('should prepend context', function (done) {
-        let message = 'foobarMessage',
-            debugKey = 'foobarDebugKey',
-            writableOutputStream = new stream.Writable({
-              write: function (chunk) {
-                assert.equal(chunk.toString(), debugKey + ' ' + message + '\n');
-                done();
-              }
-            }),
-            consoleTransporter = new ConsoleTransporter({
-              stdout: writableOutputStream,
-              colors: false
-            });
-
-        consoleTransporter.write([message], SHARED_CONSTANTS.SEVERITY.debug, debugKey, function () {});
+      it('should set default colors', function () {
+        assert.equal(defaultConsole.chalk.enabled, chalk.supportsColor);
       });
 
-      it('should remember color for each context', function (done) {
-        let tests = {
-              msg1: {
-                key: 'debugKey1',
-                color: 'green'
-              },
-              msg2: {
-                key: 'debugKey2',
-                color: 'blue'
-              },
-              msg3: {
-                key: 'debugKey3',
-                color: 'magenta'
-              },
-              msg4: {
-                key: 'debugKey4',
-                color: 'cyan'
-              },
-              msg5: {
-                key: 'debugKey5',
-                color: 'green'
-              }
-            },
-            doneCounter = 0,
-            writableOutputStream = new stream.Writable({
-              write: function (chunk, encoding, next) {
-                let msg = chunk.toString().split(' '),
-                    testKey = msg[1].trim();
+      it('should set custom colors', function () {
+        assert.equal(new Console({colors: true}).chalk.enabled, true);
+        assert.equal(new Console({colors: false}).chalk.enabled, false);
+      });
 
-                if (typeof tests[testKey] === 'undefined') {
-                  assert.fail('this should never happen');
-                  return done();
-                }
+      it('should throw on invalid colors', function () {
+        assert.throws(function () {
+          new Console({colors: 'foo'});
+        });
+      });
 
-                assert.equal(msg[0], chalk[tests[testKey].color](tests[testKey].key));
+    });
 
-                doneCounter++;
-                if (doneCounter === 10) {
-                  return done();
-                }
-                next();
-              }
-            }),
-            consoleTransporter = new ConsoleTransporter({
-              stream: writableOutputStream,
-              colors: true
-            }),
-            cb = function () {};
+  });
 
-        for (let t in tests) {
-          consoleTransporter.write(t, {
-            debugKey: tests[t].key,
-            severity: SHARED_CONSTANTS.SEVERITY.debug
-          }, cb);
+  describe('log', function () {
+
+    it('should log without color', function (done) {
+      let consoleTransporter = new Console({colors: false}),
+          stdOut = process.stdout.write,
+          stdErr = process.stderr.write,
+          doneCount = 0,
+          isDone = function () {
+            if (doneCount++ >= 1) {
+              return done();
+            }
+          };
+
+      process.stdout.write = function (message) {
+        if (message.split(' ')[0] === 'logWithoutColor') {
+          assert.equal(message, 'logWithoutColor foo5bar\n');
+          isDone();
+        } else {
+          stdOut.apply(this, arguments);
         }
+      };
 
-        for (let t in tests) {
-          consoleTransporter.write(t, {
-            debugKey: tests[t].key,
-            severity: SHARED_CONSTANTS.SEVERITY.debug
-          }, cb);
+      process.stderr.write = function (message) {
+        if (message.split(' ')[0] === 'logWithoutColor') {
+          assert.equal(message, 'logWithoutColor foo0bar\n');
+          isDone();
+        } else {
+          stdErr.apply(this, arguments);
         }
+      };
+
+      consoleTransporter.log('foo5bar', 5, 'logWithoutColor', function () {
+        process.stdout.write = stdOut;
+      });
+      consoleTransporter.log('foo0bar', 0, 'logWithoutColor', function () {
+        process.stderr.write = stdErr;
       });
     });
+
+    it('should log with color', function (done) {
+      let tests = [
+        {
+          context: 'logWithColor0',
+          color: 'green',
+          severity: 0
+        },
+        {
+          context: 'logWithColor1',
+          color: 'blue',
+          severity: 1
+        },
+        {
+          context: 'logWithColor0',
+          color: 'green',
+          severity: 2
+        },
+        {
+          context: 'logWithColor1',
+          color: 'blue',
+          severity: 3
+        },
+        {
+          context: 'logWithColor2',
+          color: 'magenta',
+          severity: 4
+        },
+        {
+          context: 'logWithColor3',
+          color: 'cyan',
+          severity: 5
+        },
+        {
+          context: 'logWithColor4',
+          color: 'yellow',
+          severity: 6
+        },
+        {
+          context: 'logWithColor5',
+          color: 'red',
+          severity: 7
+        },
+        {
+          context: 'logWithColor6',
+          color: 'bgRed',
+          severity: 0
+        },
+        {
+          context: 'logWithColor7',
+          color: 'bgGreen',
+          severity: 1
+        },
+        {
+          context: 'logWithColor8',
+          color: 'bgYellow',
+          severity: 2
+        },
+        {
+          context: 'logWithColor9',
+          color: 'bgBlue',
+          severity: 3
+        },
+        {
+          context: 'logWithColor10',
+          color: 'bgMagenta',
+          severity: 4
+        },
+        {
+          context: 'logWithColor11',
+          color: 'bgCyan',
+          severity: 5
+        },
+        {
+          context: 'logWithColor12',
+          color: 'green',
+          severity: 6
+        },
+        {
+          context: 'logWithColor13',
+          color: 'blue',
+          severity: 7
+        },
+        {
+          context: 'logWithColor13',
+          color: 'blue',
+          severity: 0
+        }
+          ],
+          testChalk = new chalk.constructor({enabled: true}),
+          consoleTransporter = new Console({colors: true}),
+          doneCount = 0,
+          isDone = function () {
+            if (doneCount++ >= tests.length-1) {
+              return done();
+            }
+          };
+
+      tests.forEach(function (test) {
+        consoleTransporter.write = function (msg, severity) {
+          let msgArray = msg.split(' ');
+          assert.equal(msgArray[0], testChalk[test.color](test.context));
+          assert.equal(severity, test.severity);
+          assert.equal(msgArray[1], 'foobar');
+          isDone();
+        };
+
+        consoleTransporter.log('foobar', test.severity, test.context, null);
+      });
+
+    });
+
   });
+
 });

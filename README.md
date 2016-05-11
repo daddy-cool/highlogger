@@ -21,6 +21,9 @@ $ npm install highlogger
 * configurable maximum message length per transporter
 * support for a fallback transporter in case maximum message length was exceeded
 * supports loading config via [config](https://www.npmjs.com/package/config) module if present
+* adds a context to each message
+  * default context is the filename of the log-method caller
+  * custom context can also be set
 
 ## Quick Start
 ```node
@@ -49,7 +52,7 @@ let config = [
 let log = new Highlogger(config);
 ```
 
-If you have the [config](https://www.npmjs.com/package/config) module installed you can also put your config in your `yml`-file under the key `highlogger`
+If you have the [config](https://www.npmjs.com/package/config) module installed your config will also be attempted to be read from the key `highlogger`
 
 __Example default.yml__
 ```yml
@@ -65,9 +68,10 @@ let log = new Highlogger();
 ```
 
 ## Configuration
-__type:__ `array`
+__type:__ array
 
-The configuration array has to be an array (or collection) of transporter configurations.
+The configuration array has to be an array (or collection) of transporter configurations.<br/>
+Configuration is always on a per-transporter basis.
 
 __Example__
 ```node
@@ -77,16 +81,18 @@ __Example__
 ]
 ```
 
+### Common Transporter Configuration
+
 __Config fields supported by every transporter:__
 
 field       | type
 ----------- | ---------
-type        | `string`
-sizeLimit   | `number`
-severityMin | `string`
-severityMax | `string`
-json        | `boolean`
-fallback    | `object`
+type        | string
+sizeLimit   | number
+severityMin | string
+severityMax | string
+json        | boolean
+fallback    | object
 
 __Example (collection)__
 ```node
@@ -103,330 +109,178 @@ __Example (collection)__
 }
 ```
 
-### sizeLimit
-__type:__ `number`<br />
-__default:__ `Infinity` (`512` for Socket & Syslog)
+#### type
+__type:__ string<br />
+__required__<br />
+__Available types:__ `console` • `socket` • `syslog`
+
+Defines the type of a transporter.
+
+#### sizeLimit
+__type:__ number<br />
+__default:__ `Infinity`
 
 This determines the maximum amount of characters a transporter should allow for a message.<br />
 If the maximum is exceeded the transporter will log a corresponding error message.<br />
 In case of an exceeded maximum a fallback transporter, if available, will log the full message.
 
-### severityMin
-__type:__ `string`<br />
+#### severityMin
+__type:__ string<br />
 __default:__ `emerg`<br />
 __Available severities:__ `emerg` • `alert` • `crit` • `error` • `warn` • `notice` • `info` • `debug`
 
-Defines the minimum severity a transporter will log. `emerg` is the lowest severity while `debug` is the highest.
+Defines the minimum severity a transporter will log.<br />
+`emerg` is the lowest severity while `debug` is the highest.
 
-### severityMax
-__type:__ `string`<br />
+#### severityMax
+__type:__ string<br />
 __default:__ `debug`<br />
 __Available severities:__ `emerg` • `alert` • `crit` • `error` • `warn` • `notice` • `info` • `debug`
 
-Defines the maximum severity a transporter will log. `emerg` is the lowest severity while `debug` is the highest.
+Defines the maximum severity a transporter will log.<br />
+`emerg` is the lowest severity while `debug` is the highest.
 
-##### json
-__type:__ `boolean`
+#### json
+__type:__ boolean<br />
 __default:__ `false`
 
 If enabled will wrap every message as a stringified JSON object.<br />
-If you log a non-object it will be wrapped under the key `message`, so "foobar" would become `{"message": "foobar"}`.<br />
-Objects (or errors & arrays) will be stringified, so `{err: 'abc', foo: true}` would become `{"err":"abc","foo":true}`
 
-Should only be enabled if you specifically need your messages to be wrapped (e.g. for Kibana)
+Non-objects will be wrapped under a `message`-key:<br />
+`"foobar"` would become `{"message":"foobar"}`.<br />
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   json: true
- }
-];
-```
+Objects (or errors & arrays) will be stringified:<br />
+`{err: 'or', foo: 'bar'}` would become `{"err":"or","foo":"bar"}`
 
-### transporter.jsonTimeout
-__type:__ `number`
-__default:__ `100`
+#### fallback
+__type:__ object<br />
 
-The maximum amount if time in milliseconds that is allowed to shrink a message into a wrapped json.
-Works only if transporter.json is enabled.
+This is an optional field that, if set, expects another transporter configuration.<br >
+The configured "fallback transporter" will be used when the original transporter can not log a message.<br />
+Currently the fallback would only be used when a message exceeds the  original transporters sizeLimit.
 
 __Example__
 ```node
-let config = [
+[
   {
-    type: 'console',
-    jsonTimeout: 200
+    type: 'syslog',
+    sizeLimit: 100,
+    fallback: {
+      type: 'console'
+    }
   }
-];
+]
 ```
 
-### transporter.jsonDefaultField
-__type:__ `String`
-__default:__ `message`
+### Console Transporter Configuration
 
-The default key any message will be wrapped in if transporter.json is enabled.
+#### colors
+__type:__ boolean<br />
+__default:__ tries to determine if the console supports colors
 
-__Example__
-```node
-let config = [
-  {
-    type: 'console',
-    jsonDefaultField: 'msg'
-  }
-];
-```
+Decides whether or not messages for this transporter will be colored.
 
-### transporter.type
-__type:__ `string`
+### Socket Transporter Configuration
+
+#### method
+__type:__ `string`<br />
 __required__
 
-__Available types:__
-`console` • `socket` • `syslog`
+Currently only supports `udp4`
 
-__Example__
-```node
-let config = [
-  {type: 'socket'}
-];
-```
-
-#### Console transporter
-
-##### transporter.stream
-__type:__ `object`
-__default:__ `process.stdout`
-
-Here you can set the stream to write all messages for this transporter to.
-Defaults to your node.js console (`process.stdout`) but should support any writable stream (including filestreams to log into a file).
-
-__Example__
-```node
-let config = [
- {
-   type: 'console',
-   stream: process.stdout
- }
-];
-```
-
-##### transporter.colors
-__type:__ `boolean`
-__default:__ `true`
-
-This flag decides whether or not messages for this transporter will be colored.
-Disable this if your stream doesn't support colors.
-
-__Example__
-```node
-let config = [
- {
-   type: 'console',
-   colors: false
- }
-];
-```
-
-#### Socket transporter
-
-##### transporter.method
-__type:__ `string`
+#### address
+__type:__ string<br />
 __required__
 
-Currently only supports `'udp4'`
+The target IP (like `127.0.0.1` or `localhost`).
 
-__Example__
-```node
-let config = [
- {
-   type: 'socket',
-   method: 'udp4'
- }
-];
-```
-
-##### transporter.address
-__type:__ `string`
+##### port
+__type:__ number
 __required__
 
-Expects the target IP/URL for sending messages.
+The target port.
 
-__Example__
-```node
-let config = [
- {
-   type: 'socket',
-   address: '127.0.0.1'
- }
-];
-```
+#### sizeLimit
+__type:__ number<br />
+__default:__ `512`
 
-##### transporter.port
-__type:__ `number`
-__required__
+Default of `512` for socket transporters to avoid problems with udp.
 
-Expects the target port for sending messages.
+### Syslog Transporter Configuration
 
-__Example__
-```node
-let config = [
- {
-   type: 'socket',
-   port: 43002
- }
-];
-```
-
-#### Syslog transporter
-
-##### transporter.facility
-__type:__ `string`
-__default:__ `'user'`
-
-__Available facilities:__
+#### facility
+__type:__ string<br />
+__default:__ `user`<br />
+__Available facilities:__<br />
 `kern` • `user` • `mail` • `daemon` • `auth` • `syslog` • `lpr` • `news` • `uucp` • `clock` • `sec` • `ftp` • `ntp` • `audit` • `alert` • `clock2` • `local0` • `local1` • `local2` • `local3` • `local4` • `local5` • `local6` • `local7`
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   facility: 'local0'
- }
-];
-```
+#### hostname
+__type:__ string<br />
+__default:__ tries to determine local hostname
 
-##### transporter.hostname
-__type:__ `string`
-__default:__ `require('os').hostname()`
+Will be filtered to PRINTUSASCII and a maximum of 255 characters.
 
-Will be filtered according to PRINTUSASCII and can only be a maximum of 255 characters.
+#### appName
+__type:__ string<br/>
+__default:__ value of `name` set in your `package.json`
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   hostname: 'PC-10-10-10-10'
- }
-];
-```
+Will be filtered to PRINTUSASCII and a maximum of 48 characters.
 
-##### transporter.appName
-__type:__ `string`
-__default:__ `"name"` defined in your `package.json` or `'-'`
-
-Will be filtered according to PRINTUSASCII and can only be a maximum of 48 characters.
-
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   appName: 'myNodeApplication'
- }
-];
-```
-
-##### transporter.processId
-__type:__ `string`
+#### processId
+__type:__ string<br />
 __default:__ `process.pid`
 
-Will be filtered according to PRINTUSASCII and can only be a maximum of 128 characters.
+Will be filtered to PRINTUSASCII and a maximum of 128 characters.
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   processId: '83123'
- }
-];
-```
+#### timezoneOffset
+__type:__ number<br />
+__default:__ attempts to determine your systems offset from UTC time
 
-##### transporter.timezoneOffset
-__type:__ `number`
-__default:__ attempts to read your systems offset from UTC time
-
-This allows you to set a custom timezone offset from UTC time in hours.
+Allows you to set a custom timezone offset from UTC time in hours.<br />
 Value must be between -16 to 16 hours.
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   timezoneOffset: 2
- }
-];
-```
+#### method
+__type:__ string<br />
+__default:__ `udp4`
 
-##### transporter.method
-__type:__ `string`
-__default:__ `'udp4'`
+Currently only supports `udp4`
 
-Currently only supports `'udp4'`
+#### address
+__type:__ string<br />
+__default:__ `127.0.0.1`
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   method: 'udp4'
- }
-];
-```
+The target IP (like `127.0.0.1` or `localhost`).
 
-##### transporter.address
-__type:__ `string`
-__default:__ `'127.0.0.1'`
-
-Expects the target IP/URL for sending messages.
-
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   address: '127.0.0.1'
- }
-];
-```
-
-##### transporter.port
-__type:__ `number`
+#### port
+__type:__ number<br />
 __default:__ `514`
 
-Expects the target port for sending messages.
+The target port.
 
-__Example__
-```node
-let config = [
- {
-   type: 'syslog',
-   port: 514
- }
-];
-```
+### sizeLimit
+__type:__ number<br />
+__default:__ `512`
+
+Default of `512` for syslog transporters to avoid problems with udp.<br />
+Keep in mind that the syslog message prefix will also count into this size limit.
+
 
 ## Singleton
-Highlogger needs to be instanced at least once with your desired configuration.
-You can access the same instance with Highlogger's singleton functionality.
+Highlogger needs to be instanced at least once with your desired configuration.<br />
+You can then access the same instance with Highlogger's singleton functionality.
 
 __Example__
 ```node
-let log = require('highlogger').getInstance();
+let Highlogger = require('highlogger');
+new Highlogger();
+let log = Highlogger.getInstance();
 
 log.notice('this is a error message');
 ```
 
-Keep in mind that this will work only if you previously instanced Highlogger at least once.
-In rare cases you might not be able to rely on node.js's built-in module caching.
-In those cases you either need to inject/pass your instance of Highlogger, use a service locator or create a new instance of Highlogger each time.
-
 ## Usage
-Highlogger's instances offer logging methods for each supported severity.
+Highlogger instances offer logging methods for each supported severity,<br />
+as well as 'getter' methods that allows you to overwrite the message context.
 
 __Example__
 ```node
@@ -436,57 +290,64 @@ logger.warn(message0, message1, messageN);
 ```
 At least one `message` parameter is required.
 
-### Debug
-You can set debug keys per environment variable `DEBUG`.
-Debug keys are set by passing a comma-separated list of keys.
+## Debug
+You can set debug contexts per environment variable `DEBUG` by passing a comma-separated list of contexts.<br />
+`*` as wildcard is supported
 
-Only keys that are included will show and as a wildcard you can use `*`, which will match anything.
-This means `DEBUG=*` would include any key while `DEBUG=foo,bar*` would only include the key `foo` and any key starting with `bar`.
+Messages with debug severity will be omitted unless a matching context environment was set.<br />
+To see all debug messages you can set `DEBUG=*`
 
-You can also exclude specific keys by prefixing them with a `-` character.
-`DEBUG=*,-foobar:*` would include all debug keys except those starting with `foobar:`.
+You can also exclude specific contexts by prefixing them with a `-`.<br />
+`DEBUG=*,-foo*` would include all contexts except those starting with 'foo'.
 
-On Windows the environment variable is set using the `set` command:
-```bash
-set DEBUG=*,-not_this
-```
+## Available methods
 
-### Available methods
+Highlogger instances expose several methods.
 
-##### emerg(message...)
-Accepts multiple parameters of any type and will pass them on with `emerg` severity to transporters.
+Direct logging methods are:<br />
+`emerg()` • `alert()` • `crit()` • `error()` • `warn()` • `notice()` • `info()` • `debug()`
 
-##### crit(message...)
-Accepts multiple parameters of any type and will pass them on with `crit` severity to transporters.
+Each of those methods accepts one parameter of any type.<br />
+This parameter will be sent to all transporters with a matching severity range.
 
-##### error(message...)
-Accepts multiple parameters of any type and will pass them on with `error` severity to transporters.
+The filename of the caller of any of these methods will be added as context.<br />
+This means if you try to log 'foobar' like `log.notice('foobar');` from a file "filename.js":
+  * `json` disabled, context will just be prepended: `filename.js foobar`
+  * `json` enabled, context will be added as a key: `{"message":"foobar","context":"filename.js"}`
 
-##### warn(message...)
-Accepts multiple parameters of any type and will pass them on with `warn` severity to transporters.
 
-##### info(message...)
-Accepts multiple parameters of any type and will pass them on with `info` severity to transporters.
-
-##### debug(message...)
-Accepts multiple parameters of any type and will pass them on with `debug` severity to transporters.
-
-##### getDebug(debugKey)
-Accepts a single parameter `debugKey` which must be a string.
-Will return a function and depending on whether or not the passed `debugKey` is currently included in the `DEBUG` environment variable this will either return a `debug`-function or an empty function.
-`getDebug(debugKey)()` will work the same as the regular `debug`-function except add the debugKey as e.g. a message prefix (works different depending on the transporter).
+`debug()` logs will be omitted unless their context matches the `DEBUG` environment.
 
 __Example__
 ```node
-let logger = new Highlogger();
-let debug = logger.getDebug('foobar');
+let Highlogger = require('highlogger');
+let log = new Highlogger();
 
-debug('this is a debug message');
+log.emerg("emergency message");
+log.alert("alert message");
+log.crit("critical message");
+log.error("error message");
+log.warn("warning message");
+log.notice("notice message");
+log.info("information message");
+log.debug("debug message");
 ```
-In the example this message would only be logged if "foobar" is a included debug key.
 
-###### debug(message...)
-Accepts multiple parameters of any type and will pass them on with `debug` severity to transporters.
+Sometimes it might be useful to set a custom context.<br />
+You can use these methods to get log methods with your custom context:<br />
+`getEmerg()` • `getAlert()` • `getCrit()` • `getError()` • `getWarn()` • `getNotice()` • `getInfo()` • `getDebug()`
+
+__Example__
+```node
+let Highlogger = require('highlogger');
+let log = new Highlogger();
+let myAlert = log.getEmerg('customContext');
+
+myAlert("foobar");
+```
+
+Depending on the transporters `json` setting, this would either log<br />
+`customContext foobar` or `{"message":"foobar","context":"customContext"}`
 
 ## Tests
 Run unit tests:
@@ -500,8 +361,9 @@ $ npm run cover
 ```
 
 ## Todo
+  * add file transporter
+  * add AWS/S3 bucket transporter
   * support for external transporter plugins
-  * easier file logging transporter (already working by passing a filestream to console transporter)
   * unix-domain support for socket transporter
   * tcp4/6 support for socket transporter
   * udp6 support for socket transporter

@@ -1,26 +1,30 @@
 {
   "name": "highlogger",
   "description": "fast, minimalist logging module",
-  "version": "2.6.2",
+  "version": "3.0.0",
   "license": "MIT",
   "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [
     "Michael Freund <michael.freund@shopgate.com>"
   ],
   "main": "./lib/highlogger.js",
+  "directories": {
+    "lib": "./lib"
+  },
   "scripts": {
     "test": "node_modules/.bin/mocha --recursive",
     "cover": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- --recursive"
   },
   "dependencies": {
-    "async": "^1.5.2",
-    "chalk": "^1.1.1",
+    "async": "^2.0.0-rc.4",
+    "chalk": "^1.1.3",
     "circular-json": "^0.3.0",
-    "moment": "^2.12.0"
+    "glob": "^7.0.3",
+    "moment": "^2.13.0"
   },
   "devDependencies": {
     "assert": "^1.3.0",
-    "istanbul": "^0.4.2",
+    "istanbul": "^0.4.3",
     "mocha": "^2.4.5",
     "moment-parseformat": "^2.1.1"
   },
@@ -37,13 +41,12 @@
     "socket",
     "udp",
     "udp4",
-    "RFC5424"
+    "rfc5424",
+    "s3",
+    "aws"
   ],
   "repository": "github:daddy-cool/highlogger",
   "engines": {
     "node": ">=4.0.0"
-  },
-  "files": [
-    "lib/"
-  ]
+  }
 }

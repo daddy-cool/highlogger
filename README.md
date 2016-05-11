@@ -9,16 +9,18 @@ $ npm install highlogger
 ```
 
 ## Features
-* multiple transporters
-    * console (supports colors, accepts any writable stream but will default to `process.stdout`)
-    * dgram socket (supporting only udp4 for now)
-    * syslog, supporting [RFC5424](https://tools.ietf.org/html/rfc5424) (only udp4, structuredData not supported, messageId only for debug)
-* log to multiple transporters at once
-* set different severity ranges per transporter, transporter will only log messages within their severity range
+* log to multiple transporters at once, depending on message severity
+* set severity range per transporter, each transporter will only log messages within its severity range
+* available transporters:
+  * console
+  * socket (only udp4 right now)
+  * syslog (implemented after [RFC5424](https://tools.ietf.org/html/rfc5424), only udp4 right now, structuredData  & messageId not supported)
 * debug environment variable
-    * white- and blacklisting for debug messages based on their debug key
+  * white- and blacklisting for debug messages based on their debug key
 * can be used as singleton
 * configurable maximum message length per transporter
+* support for a fallback transporter in case maximum message length was exceeded
+* supports loading config via [config](https://www.npmjs.com/package/config) module if present
 
 ## Quick Start
 ```node
@@ -29,14 +31,15 @@ log.error('this is a error message');
 log.notice('this is a notice message');
 ```
 
-Highlogger should be configured according to your setup.
-Per default Highlogger will just log to console (`process.stdout`) and won't show any debug messages.
+Highlogger has to be configured according to your demands.<br />
+Per default Highlogger will log to console (`process.stdout` & `process.stderr`).<br />
+Debug messages will only be shown if the environment is set.
 
 ## Setup
-Highlogger needs to be instanced at least once before you can use it.
-It will accept an array of transporter configs as a parameter for configuration.
+Highlogger has to be instanced at least once before you can use it.<br />
+It will accept an array (also a collection) of transporter configs as a parameter for configuration.
 
-__Example__
+__Example with parameter__
 ```node
 let Highlogger = require('highlogger');
 let config = [
@@ -46,86 +49,89 @@ let config = [
 let log = new Highlogger(config);
 ```
 
+If you have the [config](https://www.npmjs.com/package/config) module installed you can also put your config in your `yml`-file under the key `highlogger`
+
+__Example default.yml__
+```yml
+highlogger:
+  -
+    type: console
+```
+
+__Example setup__
+```node
+let Highlogger = require('highlogger');
+let log = new Highlogger();
+```
+
 ## Configuration
 __type:__ `array`
 
-The configuration array is expected to be an array of transporter configurations.
+The configuration array has to be an array (or collection) of transporter configurations.
 
 __Example__
 ```node
-let config = [
+[
   {type: 'console'},
-  {type: 'socket'}
-];
+  {type: 'syslog'}
+]
 ```
 
-__Config values supported by every transporter:__
+__Config fields supported by every transporter:__
 
-First attribute  | type
-------------- | -------------
-maxMessageSize  | `number`
-severity  | `object`
-json | `boolean`
-stringifyJsonTimeout | `number`
-stringifyJsonDefaultField | `string`
-type  | `string`
+field       | type
+----------- | ---------
+type        | `string`
+sizeLimit   | `number`
+severityMin | `string`
+severityMax | `string`
+json        | `boolean`
+fallback    | `object`
 
-Other config values depend on the transporter type.
-
-### transporter.maxMessageSize
-__type:__ `number`
-__default:__ `Infinity` for Console, `512` for Socket & Syslog
-
-The value is in bytes or characters and if a message exceeds the maxMessageSize the message will be replaced by a message like "message size exceeded".
-
-__Example__
+__Example (collection)__
 ```node
-let config = [
-  {
+{
+  0: {
     type: 'console',
-    maxMessageSize: 1024
+    json: false,
+    sizeLimit: 512
+  },
+  1: {
+    severityMin: 'crit',
+    type: 'syslog'
   }
-];
+}
 ```
 
-In this example any message longer than 1024 bytes would be replaced.
+### sizeLimit
+__type:__ `number`<br />
+__default:__ `Infinity` (`512` for Socket & Syslog)
 
-### transporter.severity
-__type:__ `object`
-__default:__ `{minimum: 'emerg', maximum: 'debug'}`
+This determines the maximum amount of characters a transporter should allow for a message.<br />
+If the maximum is exceeded the transporter will log a corresponding error message.<br />
+In case of an exceeded maximum a fallback transporter, if available, will log the full message.
 
-`severity` is can contain two fields: `minimum` and `maximum`.
-These set the severity range this transporter should react on.
+### severityMin
+__type:__ `string`<br />
+__default:__ `emerg`<br />
+__Available severities:__ `emerg` • `alert` • `crit` • `error` • `warn` • `notice` • `info` • `debug`
 
-Both fields are optional and if one is passed it must be a `string`.
-Per default transporters react to any severity.
+Defines the minimum severity a transporter will log. `emerg` is the lowest severity while `debug` is the highest.
 
-__Available severities:__
-`emerg` • `alert` • `crit` • `error` • `warn` • `notice` • `info` • `debug`
+### severityMax
+__type:__ `string`<br />
+__default:__ `debug`<br />
+__Available severities:__ `emerg` • `alert` • `crit` • `error` • `warn` • `notice` • `info` • `debug`
 
-A lower severity means a higher priority, so `emerg` is the lowest severity while `debug` is the highest.
+Defines the maximum severity a transporter will log. `emerg` is the lowest severity while `debug` is the highest.
 
-__Example__
-```node
-let config = [
-  {
-    type: 'console',
-    severity: {
-      minimum: 'error',
-      maximum: 'debug'
-    }
-  }
-];
-```
-
-In this example only messages with a priority lower or equal to `error` would be sent to this transporter - `emerg`, `alert` and `crit` would be ignored.
-
-##### transporter.json
+##### json
 __type:__ `boolean`
 __default:__ `false`
 
-If enabled will wrap every message in curly braces as valid JSON.
-So `"foobar"` would become `{"0": "foobar"}`
+If enabled will wrap every message as a stringified JSON object.<br />
+If you log a non-object it will be wrapped under the key `message`, so "foobar" would become `{"message": "foobar"}`.<br />
+Objects (or errors & arrays) will be stringified, so `{err: 'abc', foo: true}` would become `{"err":"abc","foo":true}`
 
 Should only be enabled if you specifically need your messages to be wrapped (e.g. for Kibana)
 

@@ -34,10 +34,10 @@ describe('transporter abstract', function () {
       it('should throw on invalid severity', function () {
         assert.throws(function () {
           new Abstract({severityMin: 'foo'});
-        });
+        }, null, null);
         assert.throws(function () {
           new Abstract({severityMax: 'bar'});
-        });
+        }, null, null);
       });
 
     });
@@ -56,7 +56,7 @@ describe('transporter abstract', function () {
       it('should throw on invalid json', function () {
         assert.throws(function () {
           new Abstract({json: 'foo'});
-        });
+        }, null, null);
       });
 
     });
@@ -75,7 +75,7 @@ describe('transporter abstract', function () {
       it('should throw on invalid sizeLimit', function () {
         assert.throws(function () {
           new Abstract({sizeLimit: 'foo'});
-        });
+        }, null, null);
       });
 
     });
@@ -94,7 +94,7 @@ describe('transporter abstract', function () {
       it('should throw on invalid fallback', function () {
         assert.throws(function () {
           new Abstract({fallbackTransporter: "foo"});
-        });
+        }, null, null);
       });
 
     });
@@ -190,7 +190,7 @@ describe('transporter abstract', function () {
   });
 
   it('should throw on write', function () {
-    assert.throws(defaultAbstract.write);
+    assert.throws(defaultAbstract.write, null, null);
   });
 
 });

@@ -3,7 +3,6 @@
 let Abstract = require('../../lib/transporters/abstract'),
     Socket = require('../../lib/transporters/socket'),
     assert = require('assert'),
-    constants = require('../../lib/helpers/constants'),
     dgram = require('dgram'),
     defaultSocket = new Socket({address: '127.0.0.1', port: 514, method: 'udp4'});
 
@@ -29,7 +28,7 @@ describe('transporter socket', function () {
       it('should throw on invalid sizeLimit', function () {
         assert.throws(function () {
           new Socket({address: '127.0.0.1', port: 514, method: 'udp4', sizeLimit: 'foo'});
-        });
+        }, null, null);
       });
 
     });
@@ -43,7 +42,7 @@ describe('transporter socket', function () {
       it('should throw on invalid address', function () {
         assert.throws(function () {
           new Socket({address: true, port: 514, method: 'udp4'});
-        });
+        }, null, null);
       });
 
     });
@@ -57,7 +56,7 @@ describe('transporter socket', function () {
       it('should throw on invalid port', function () {
         assert.throws(function () {
           new Socket({address: '192.168.99.100', port: true, method: 'udp4'});
-        });
+        }, null, null);
       });
 
     });
@@ -71,7 +70,7 @@ describe('transporter socket', function () {
       it('should throw on invalid method', function () {
         assert.throws(function () {
           new Socket({address: '192.168.99.100', port: 777, method: 'foobar'});
-        });
+        }, null, null);
       });
 
     });

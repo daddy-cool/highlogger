@@ -4,6 +4,7 @@ let assert = require('assert'),
     constants = require('../../lib/helpers/constants');
 
 describe('constants', function () {
+
   it('should have correct object types', function () {
     assert.equal(constants.TYPE_OF.BOOLEAN, 'boolean');
     assert.equal(constants.TYPE_OF.FUNCTION, 'function');
@@ -24,4 +25,5 @@ describe('constants', function () {
     assert.equal(constants.SEVERITY.info, 6);
     assert.equal(constants.SEVERITY.debug, 7);
   });
+  
 });

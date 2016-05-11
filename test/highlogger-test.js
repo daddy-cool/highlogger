@@ -6,18 +6,17 @@ let Highlogger = require('../lib/highlogger'),
     SyslogTransporter = require('../lib/transporters/syslog'),
     assert = require('assert'),
     async = require('async'),
-    dgram = require('dgram');
+    dgram = require('dgram'),
+    constants = require('../lib/helpers/constants');
 
 process.env.SUPPRESS_NO_CONFIG_WARNING = true;
-
-let constants = require('../lib/helpers/constants');
 
 describe('Highlogger', function () {
 
   describe('getInstance', function () {
     it('should throw an error if used before instancing', function () {
       delete require.cache;
-      assert.throws(Highlogger.getInstance, "should throw error");
+      assert.throws(Highlogger.getInstance, null, null);
     });
 
     it('should return an instance if instanced at least once', function () {
@@ -36,6 +35,12 @@ describe('Highlogger', function () {
 
       assert.notEqual(Highlogger.getInstance(), hl1);
       assert.equal(Highlogger.getInstance(), hl2);
+    });
+  });
+
+  describe('getContext', function () {
+    it('should return the function caller filename', function () {
+      assert.equal(new Highlogger().getContext().split('/').pop(), 'runnable.js');
     });
   });
 

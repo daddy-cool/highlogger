@@ -1,7 +1,6 @@
 'use strict';
 
 let stringify = require('../../lib/helpers/stringify'),
-    fs = require('fs'),
     assert = require('assert');
 
 describe('stringify', function () {
@@ -48,7 +47,7 @@ describe('stringify', function () {
 
     function isDone () {
       if (doneCalls++ === 1) {
-        done();
+        return done();
       }
     }
 
@@ -62,4 +61,5 @@ describe('stringify', function () {
       isDone();
     });
   });
+
 });

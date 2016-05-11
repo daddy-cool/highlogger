@@ -28,7 +28,7 @@ describe('transporter console', function () {
       it('should throw on invalid colors', function () {
         assert.throws(function () {
           new Console({colors: 'foo'});
-        });
+        }, null, null);
       });
 
     });

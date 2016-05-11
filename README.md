@@ -15,6 +15,7 @@ $ npm install highlogger
   * console
   * socket (only udp4 right now)
   * syslog (implemented after [RFC5424](https://tools.ietf.org/html/rfc5424), only udp4 right now, structuredData  & messageId not supported)
+  * S3 bucket
 * debug environment variable
   * white- and blacklisting for debug messages based on their debug key
 * can be used as singleton
@@ -194,7 +195,7 @@ __required__
 
 The target IP (like `127.0.0.1` or `localhost`).
 
-##### port
+#### port
 __type:__ number
 __required__
 
@@ -257,13 +258,16 @@ __default:__ `514`
 
 The target port.
 
-### sizeLimit
+#### sizeLimit
 __type:__ number<br />
 __default:__ `512`
 
 Default of `512` for syslog transporters to avoid problems with udp.<br />
 Keep in mind that the syslog message prefix will also count into this size limit.
 
+### S3 Transporter Configuration
+
+coming in v3.1
 
 ## Singleton
 Highlogger needs to be instanced at least once with your desired configuration.<br />
@@ -362,7 +366,6 @@ $ npm run cover
 
 ## Todo
   * add file transporter
-  * add AWS/S3 bucket transporter
   * support for external transporter plugins
   * unix-domain support for socket transporter
   * tcp4/6 support for socket transporter

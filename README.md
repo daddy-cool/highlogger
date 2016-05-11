@@ -184,7 +184,7 @@ Decides whether or not messages for this transporter will be colored.
 ### Socket Transporter Configuration
 
 #### method
-__type:__ `string`<br />
+__type:__ string<br />
 __required__
 
 Currently only supports `udp4`

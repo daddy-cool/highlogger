@@ -61,6 +61,25 @@ describe('transporter abstract', function () {
 
     });
 
+    describe('prependContext', function () {
+
+      it('should set default prependContext', function () {
+        assert.equal(defaultAbstract.prependContext, false);
+      });
+
+      it('should set custom prependContext', function () {
+        let abstract = new Abstract({prependContext: true});
+        assert.equal(abstract.prependContext, true);
+      });
+
+      it('should throw on invalid prependContext', function () {
+        assert.throws(function () {
+          new Abstract({prependContext: 'foo'});
+        }, null, null);
+      });
+
+    });
+
     describe('sizeLimit', function () {
 
       it('should set default sizeLimit', function () {
@@ -106,7 +125,7 @@ describe('transporter abstract', function () {
     it('should call write as default', function (done) {
       let abstract = new Abstract({});
 
-      abstract.write = function (message, severity, callback) {
+      abstract.write = function (message, context, severity, callback) {
         callback();
       };
 
@@ -116,7 +135,7 @@ describe('transporter abstract', function () {
     it('should call fallback on exceeded sizeLimit', function (done) {
       let abstract = new Abstract({sizeLimit: 1});
 
-      abstract.fallback = function (message, severity, callback) {
+      abstract.fallback = function (severity, context, callback) {
         callback();
       };
 
@@ -129,44 +148,44 @@ describe('transporter abstract', function () {
 
     it('should call write and fallback', function (done) {
       let fallbackTransporter = new Abstract({}),
-          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter});
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, prependContext: true});
 
-      fallbackTransporter.write = function (message, severity, callback) {
-        assert.equal(message, 'bar foo');
+      fallbackTransporter.write = function (message, context, severity, callback) {
+        assert.equal(message, 'foo');
         callback();
       };
-      abstractTransporter.write = function (message, severity, callback) {
-        assert.equal(message, 'bar message exceeded sizeLimit of 1');
+      abstractTransporter.write = function (message, context, severity, callback) {
+        assert.equal(message, 'bar message exceeded sizeLimit');
         callback();
       };
       abstractTransporter.log('foo', 0, 'bar', done);
     });
 
     it('should call write and fallback & JSON', function (done) {
-      let fallbackTransporter = new Abstract({}),
-          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true});
+      let fallbackTransporter = new Abstract({prependContext: true}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true, prependContext: true});
 
-      fallbackTransporter.write = function (message, severity, callback) {
+      fallbackTransporter.write = function (message, context, severity, callback) {
         assert.equal(message, 'bar foo');
         callback();
       };
-      abstractTransporter.write = function (message, severity, callback) {
-        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit of 1', context: 'bar'});
+      abstractTransporter.write = function (message, context, severity, callback) {
+        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit', context: 'bar'});
         callback();
       };
       abstractTransporter.log('foo', 0, 'bar', done);
     });
 
     it('should call write and fallback with fallbackMessage', function (done) {
-      let fallbackTransporter = new Abstract({}),
-          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter});
+      let fallbackTransporter = new Abstract({prependContext: true}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, prependContext: true});
 
-      fallbackTransporter.write = function (message, severity, callback) {
+      fallbackTransporter.write = function (message, context, severity, callback) {
         assert.equal(message, 'bar foo');
         callback(null, "foobar");
       };
-      abstractTransporter.write = function (message, severity, callback) {
-        assert.equal(message, 'bar message exceeded sizeLimit of 1, foobar');
+      abstractTransporter.write = function (message, context, severity, callback) {
+        assert.equal(message, 'bar message exceeded sizeLimit, foobar');
         callback();
       };
       abstractTransporter.log('foo', 0, 'bar', done);
@@ -176,12 +195,12 @@ describe('transporter abstract', function () {
       let fallbackTransporter = new Abstract({}),
           abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true});
 
-      fallbackTransporter.write = function (message, severity, callback) {
-        assert.equal(message, 'bar foo');
+      fallbackTransporter.write = function (message, context, severity, callback) {
+        assert.equal(message, 'foo');
         callback(null, "foobar");
       };
-      abstractTransporter.write = function (message, severity, callback) {
-        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit of 1', context: 'bar', fallback: 'foobar'});
+      abstractTransporter.write = function (message, context, severity, callback) {
+        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit', fallback: 'foobar'});
         callback();
       };
       abstractTransporter.log('foo', 0, 'bar', done);

@@ -20,7 +20,7 @@ describe('error', function () {
   describe('transporter', function () {
 
     it('should message exceeded sizeLimit', function () {
-      assert.equal(error.transporter.exceededSizeLimit(22), "message exceeded sizeLimit of 22");
+      assert.equal(error.transporter.exceededSizeLimit(), "message exceeded sizeLimit");
     });
 
   });

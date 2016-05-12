@@ -183,16 +183,14 @@ describe('Highlogger', function () {
           socket.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[7], context);
-            assert.equal(messageSplitArray[8], message+test[0]);
+            assert.equal(messageSplitArray[7], message+test[0]);
             doneWait();
           });
 
           socket2.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[7], context);
-            assert.equal(messageSplitArray[8], message+test[0]);
+            assert.equal(messageSplitArray[7], message+test[0]);
             doneWait();
           });
 
@@ -208,7 +206,8 @@ describe('Highlogger', function () {
             severityMin: 'emerg',
             severityMax: 'emerg',
             address: '127.0.0.1',
-            method: 'udp4'
+            method: 'udp4',
+            prependContext: true
           },
           {
             type: 'socket',
@@ -216,7 +215,8 @@ describe('Highlogger', function () {
             severityMin: 'info',
             severityMax: 'info',
             address: '127.0.0.1',
-            method: 'udp4'
+            method: 'udp4',
+            prependContext: true
           }
             ]),
             doneCount = 0;
@@ -266,7 +266,7 @@ describe('Highlogger', function () {
       });
 
       it('should wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true, prependContext: true}]),
             message = 'foobar';
 
         highLogger.getContext = function () {
@@ -283,7 +283,7 @@ describe('Highlogger', function () {
       });
 
       it('should not wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false}]),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false, prependContext: true}]),
             message = 'foobar';
 
         highLogger.getContext = function () {
@@ -368,7 +368,7 @@ describe('Highlogger', function () {
         });
 
         socket.bind(null, function () {
-          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec'}]),
+          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec', prependContext: true}]),
               debugFn = highLogger.getDebug(debugKey);
 
           debugFn('message');

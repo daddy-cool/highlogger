@@ -2,12 +2,18 @@
 
 let Abstract = require('../../lib/transporters/abstract'),
     assert = require('assert'),
-    constants = require('../../lib/helpers/constants'),
+    AWS = require('aws-sdk-mock'),
     S3 = require('../../lib/transporters/s3'),
     defaultS3;
 
-S3.skipBucketCheck();
-defaultS3 = new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar'});
+AWS.mock('S3', 'headBucket', function (params, callback) {
+  if (params.Bucket !== 'foobar') {
+    return callback('wrong bucket');
+  }
+  callback();
+});
+
+defaultS3 = new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar'});
 
 describe('transporter s3', function () {
 
@@ -17,6 +23,34 @@ describe('transporter s3', function () {
       assert.ok(defaultS3 instanceof Abstract);
     });
 
+    describe('initS3', function () {
+
+      it('should throw on AWS bucket error', function () {
+        assert.throws(function () {
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'invalidBucket'});
+        }, null, null);
+      });
+
+    });
+
+    describe('sessionToken', function () {
+
+      it('should set no default value', function () {
+        assert.equal(defaultS3.s3Config.sessionToken, undefined);
+      });
+
+      it('should set custom value', function () {
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', sessionToken: 'foobar', bucket: 'foobar'}).s3Config.sessionToken, 'foobar');
+      });
+
+      it('should throw on invalid value', function () {
+        assert.throws(function () {
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', sessionToken: true, bucket: 'foobar'});
+        }, null, null);
+      });
+
+    });
+
     describe('sslEnabled', function () {
 
       it('should set no default value', function () {
@@ -24,12 +58,12 @@ describe('transporter s3', function () {
       });
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', sslEnabled: true}).s3Config.sslEnabled, true);
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', sslEnabled: true, bucket: 'foobar'}).s3Config.sslEnabled, true);
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', sslEnabled: 'foobar'});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', sslEnabled: 'foobar', bucket: 'foobar'});
         }, null, null);
       });
 
@@ -42,12 +76,12 @@ describe('transporter s3', function () {
       });
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', maxRetries: 12}).s3Config.maxRetries, 12);
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', maxRetries: 12, bucket: 'foobar'}).s3Config.maxRetries, 12);
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', maxRetries: 'foobar'});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', maxRetries: 'foobar', bucket: 'foobar'});
         }, null, null);
       });
 
@@ -60,12 +94,12 @@ describe('transporter s3', function () {
       });
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', locationPrefix: 'locationFoobar'}).locationPrefix, 'locationFoobar');
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', locationPrefix: 'locationFoobar', bucket: 'foobar'}).locationPrefix, 'locationFoobar');
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', locationPrefix: true});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', locationPrefix: true, bucket: 'foobar'});
         }, null, null);
       });
 
@@ -78,12 +112,12 @@ describe('transporter s3', function () {
       });
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', ACL: 'private'}).s3Config.ACL, 'private');
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', ACL: 'private', bucket: 'foobar'}).s3Config.ACL, 'private');
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', ACL: true});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', ACL: true, bucket: 'foobar'});
         }, null, null);
       });
 
@@ -92,15 +126,15 @@ describe('transporter s3', function () {
     describe('region', function () {
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobartest'}).s3Config.region, 'foobartest');
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobartest', bucket: 'foobar'}).s3Config.region, 'foobartest');
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: true});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: true, bucket: 'foobar'});
         }, null, null);
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar'});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', bucket: 'foobar'});
         }, null, null);
       });
 
@@ -109,15 +143,15 @@ describe('transporter s3', function () {
     describe('secretAccessKey', function () {
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'foobartest', region: 'bar'}).s3Config.secretAccessKey, 'foobartest');
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'foobartest', region: 'bar', bucket: 'foobar'}).s3Config.secretAccessKey, 'foobartest');
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: true, region: 'bar'});
+          new S3({accessKeyId: 'foo', secretAccessKey: true, region: 'bar', bucket: 'foobar'});
         }, null, null);
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', region: 'bar'});
+          new S3({accessKeyId: 'foo', region: 'bar', bucket: 'foobar'});
         }, null, null);
       });
 
@@ -126,15 +160,32 @@ describe('transporter s3', function () {
     describe('accessKeyId', function () {
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foobartest', secretAccessKey: 'bar', region: 'bar'}).s3Config.accessKeyId, 'foobartest');
+        assert.equal(new S3({accessKeyId: 'foobartest', secretAccessKey: 'bar', region: 'bar', bucket: 'foobar'}).s3Config.accessKeyId, 'foobartest');
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: true, secretAccessKey: 'foobar', region: 'bar'});
+          new S3({accessKeyId: true, secretAccessKey: 'foobar', region: 'bar', bucket: 'foobar'});
         }, null, null);
         assert.throws(function () {
-          new S3({secretAccessKey: 'foobar', region: 'bar'});
+          new S3({secretAccessKey: 'foobar', region: 'bar', bucket: 'foobar'});
+        }, null, null);
+      });
+
+    });
+
+    describe('bucket', function () {
+
+      it('should set custom value', function () {
+        assert.equal(new S3({accessKeyId: 'foo', bucket: 'foobar', region: 'bar', secretAccessKey: 'foobar'}).s3Config.Bucket, 'foobar');
+      });
+
+      it('should throw on invalid value', function () {
+        assert.throws(function () {
+          new S3({accessKeyId: 'foo', bucket: true, region: 'bar', secretAccessKey: 'foobar'});
+        }, null, null);
+        assert.throws(function () {
+          new S3({accessKeyId: 'foo', region: 'bar', bucket: 'foobar'});
         }, null, null);
       });
 
@@ -143,7 +194,7 @@ describe('transporter s3', function () {
   });
 
   describe('write', function () {
-    
+
   });
 
 });

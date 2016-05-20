@@ -30,6 +30,9 @@
     "mocha": "^2.4.5",
     "moment-parseformat": "^2.1.1"
   },
+  "peerDependencies": {
+    "config": "^1.20.0"
+  },
   "keywords": [
     "syslog",
     "syslogd",

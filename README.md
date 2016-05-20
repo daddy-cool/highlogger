@@ -94,6 +94,7 @@ severityMin | string
 severityMax | string
 json        | boolean
 fallback    | object
+useContext  | boolean
 
 __Example (collection)__
 ```node
@@ -172,6 +173,17 @@ __Example__
   }
 ]
 ```
+
+#### useContext
+__type:__ boolean<br />
+__default:__ `false`
+
+If enabled a context will be added to every logged message.<br />
+If `json` is disabled the context will be prepended to any message,<br />
+if `json` is enabled it will be added as a seperate key.
+
+Normally the context will be the filename of the log-function caller.
+A custom context can also be set via one of the get-Methods like `getError(context)`
 
 ### Console Transporter Configuration
 
@@ -348,7 +360,7 @@ Direct logging methods are:<br />
 Each of those methods accepts one parameter of any type.<br />
 This parameter will be sent to all transporters with a matching severity range.
 
-The filename of the caller of any of these methods will be added as context.<br />
+The filename of the caller of any of these methods will be added as context is `useContext` is enabled.<br />
 This means if you try to log 'foobar' like `log.notice('foobar');` from a file "filename.js":
   * `json` disabled, context will just be prepended: `filename.js foobar`
   * `json` enabled, context will be added as a key: `{"message":"foobar","context":"filename.js"}`
@@ -374,6 +386,8 @@ log.debug("debug message");
 Sometimes it might be useful to set a custom context.<br />
 You can use these methods to get log methods with your custom context:<br />
 `getEmerg()` • `getAlert()` • `getCrit()` • `getError()` • `getWarn()` • `getNotice()` • `getInfo()` • `getDebug()`
+
+This will only work for transporters with `useContext` enabled.
 
 __Example__
 ```node

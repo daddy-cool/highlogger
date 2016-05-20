@@ -283,37 +283,70 @@ Keep in mind that the syslog message prefix will also count into this size limit
 __type:__ string<br />
 __required__
 
+Your AWS access key ID.
+
 #### secretAccessKey
 __type:__ string<br />
 __required__
+
+Your AWS secret access key.
 
 #### bucket
 __type:__ string<br />
 __required__
 
+Name of the bucket to which the message should be saved.
+
 #### region
 __type:__ string<br />
 __required__
 
+The region where the bucket is located. Possible values include:
+* `us-west-1`
+* `us-west-2`
+* `eu-west-1`
+* `eu-central-1`
+* `ap-northeast-1`
+* `ap-northeast-2`
+* `ap-southeast-1`
+* `ap-southeast-2`
+* `sa-east-1`
+
 #### sessionToken
 __type:__ string
+
+Optional AWS session token to sign requests with.
 
 #### acl
 __type:__ string<br />
 __default:__ set by the AWS-SDK
 
-Determines what priviliges are required to read the uploaded files.
+The canned ACL to apply to the message. Possible values include:
+* `private`
+* `public-read`
+* `public-read-write`
+* `authenticated-read`
+* `aws-exec-read`
+* `bucket-owner-read`
+* `bucket-owner-full-control`
 
 #### maxRetries
 __type:__ number<br />
 __default:__ set by the AWS-SDK
 
+The maximum amount of retries to attempt.
+
 #### ssl
 __type:__ boolean<br />
 __default:__ set by the AWS-SDK
 
+Whether to enable SSL.
+
 #### fallbackPrefix
 __type:__ string
+
+Only in case S3 transporter is used as fallback.<br />
+This string will be prepended to the location of the logged message in S3 and sent to the original transporter.
 
 ## Singleton
 Highlogger needs to be instanced at least once with your desired configuration.<br />

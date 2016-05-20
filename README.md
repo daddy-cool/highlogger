@@ -267,7 +267,41 @@ Keep in mind that the syslog message prefix will also count into this size limit
 
 ### S3 Transporter Configuration
 
-coming in v3.1
+#### accessKeyId
+__type:__ string<br />
+__required__
+
+#### secretAccessKey
+__type:__ string<br />
+__required__
+
+#### bucket
+__type:__ string<br />
+__required__
+
+#### region
+__type:__ string<br />
+__required__
+
+#### sessionToken
+__type:__ string
+
+#### acl
+__type:__ string<br />
+__default:__ set by the AWS-SDK
+
+Determines what priviliges are required to read the uploaded files.
+
+#### maxRetries
+__type:__ number<br />
+__default:__ set by the AWS-SDK
+
+#### ssl
+__type:__ boolean<br />
+__default:__ set by the AWS-SDK
+
+#### fallbackPrefix
+__type:__ string
 
 ## Singleton
 Highlogger needs to be instanced at least once with your desired configuration.<br />

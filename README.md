@@ -180,7 +180,7 @@ __default:__ `false`
 
 If enabled a context will be added to every logged message.<br />
 If `json` is disabled the context will be prepended to any message,<br />
-if `json` is enabled it will be added as a seperate key.
+if `json` is enabled it will be added as a separate key.
 
 Normally the context will be the filename of the log-function caller.
 A custom context can also be set via one of the get-Methods like `getError(context)`

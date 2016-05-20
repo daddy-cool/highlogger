@@ -15,6 +15,7 @@ $ npm install highlogger
   * console
   * socket (only udp4 right now)
   * syslog (implemented after [RFC5424](https://tools.ietf.org/html/rfc5424), only udp4 right now, structuredData  & messageId not supported)
+  * S3 bucket
 * debug environment variable
   * white- and blacklisting for debug messages based on their debug key
 * can be used as singleton
@@ -93,6 +94,7 @@ severityMin | string
 severityMax | string
 json        | boolean
 fallback    | object
+useContext  | boolean
 
 __Example (collection)__
 ```node
@@ -172,6 +174,17 @@ __Example__
 ]
 ```
 
+#### useContext
+__type:__ boolean<br />
+__default:__ `false`
+
+If enabled a context will be added to every logged message.<br />
+If `json` is disabled the context will be prepended to any message,<br />
+if `json` is enabled it will be added as a separate key.
+
+Normally the context will be the filename of the log-function caller.
+A custom context can also be set via one of the get-Methods like `getError(context)`
+
 ### Console Transporter Configuration
 
 #### colors
@@ -183,7 +196,7 @@ Decides whether or not messages for this transporter will be colored.
 ### Socket Transporter Configuration
 
 #### method
-__type:__ `string`<br />
+__type:__ string<br />
 __required__
 
 Currently only supports `udp4`
@@ -194,7 +207,7 @@ __required__
 
 The target IP (like `127.0.0.1` or `localhost`).
 
-##### port
+#### port
 __type:__ number
 __required__
 
@@ -257,13 +270,83 @@ __default:__ `514`
 
 The target port.
 
-### sizeLimit
+#### sizeLimit
 __type:__ number<br />
 __default:__ `512`
 
 Default of `512` for syslog transporters to avoid problems with udp.<br />
 Keep in mind that the syslog message prefix will also count into this size limit.
 
+### S3 Transporter Configuration
+
+#### accessKeyId
+__type:__ string<br />
+__required__
+
+Your AWS access key ID.
+
+#### secretAccessKey
+__type:__ string<br />
+__required__
+
+Your AWS secret access key.
+
+#### bucket
+__type:__ string<br />
+__required__
+
+Name of the bucket to which the message should be saved.
+
+#### region
+__type:__ string<br />
+__required__
+
+The region where the bucket is located. Possible values include:
+* `us-west-1`
+* `us-west-2`
+* `eu-west-1`
+* `eu-central-1`
+* `ap-northeast-1`
+* `ap-northeast-2`
+* `ap-southeast-1`
+* `ap-southeast-2`
+* `sa-east-1`
+
+#### sessionToken
+__type:__ string
+
+Optional AWS session token to sign requests with.
+
+#### acl
+__type:__ string<br />
+__default:__ set by the AWS-SDK
+
+The canned ACL to apply to the message. Possible values include:
+* `private`
+* `public-read`
+* `public-read-write`
+* `authenticated-read`
+* `aws-exec-read`
+* `bucket-owner-read`
+* `bucket-owner-full-control`
+
+#### maxRetries
+__type:__ number<br />
+__default:__ set by the AWS-SDK
+
+The maximum amount of retries to attempt.
+
+#### ssl
+__type:__ boolean<br />
+__default:__ set by the AWS-SDK
+
+Whether to enable SSL.
+
+#### fallbackPrefix
+__type:__ string
+
+Only in case S3 transporter is used as fallback.<br />
+This string will be prepended to the location of the logged message in S3 and sent to the original transporter.
 
 ## Singleton
 Highlogger needs to be instanced at least once with your desired configuration.<br />
@@ -310,7 +393,7 @@ Direct logging methods are:<br />
 Each of those methods accepts one parameter of any type.<br />
 This parameter will be sent to all transporters with a matching severity range.
 
-The filename of the caller of any of these methods will be added as context.<br />
+The filename of the caller of any of these methods will be added as context is `useContext` is enabled.<br />
 This means if you try to log 'foobar' like `log.notice('foobar');` from a file "filename.js":
   * `json` disabled, context will just be prepended: `filename.js foobar`
   * `json` enabled, context will be added as a key: `{"message":"foobar","context":"filename.js"}`
@@ -337,6 +420,8 @@ Sometimes it might be useful to set a custom context.<br />
 You can use these methods to get log methods with your custom context:<br />
 `getEmerg()` • `getAlert()` • `getCrit()` • `getError()` • `getWarn()` • `getNotice()` • `getInfo()` • `getDebug()`
 
+This will only work for transporters with `useContext` enabled.
+
 __Example__
 ```node
 let Highlogger = require('highlogger');
@@ -362,7 +447,6 @@ $ npm run cover
 
 ## Todo
   * add file transporter
-  * add AWS/S3 bucket transporter
   * support for external transporter plugins
   * unix-domain support for socket transporter
   * tcp4/6 support for socket transporter

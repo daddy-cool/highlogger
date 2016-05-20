@@ -236,7 +236,7 @@ describe('transporter syslog', function () {
           process.pid,
           '-',
           '-',
-          JSON.stringify({message: message, context: context})
+          JSON.stringify({message: message})
         ];
 
     receiver.on("error", function (err) {

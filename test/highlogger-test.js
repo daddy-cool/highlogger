@@ -85,11 +85,9 @@ describe('Highlogger', function () {
       });
 
       it('should call errorHandler on unsupported transporterType', function () {
-        function invalidTransporter () {
+        assert.throws(function invalidTransporter () {
           new Highlogger([{type: -1}]);
-        }
-
-        assert.throws(invalidTransporter);
+        }, null, null);
       });
     });
   });
@@ -183,16 +181,14 @@ describe('Highlogger', function () {
           socket.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[7], context);
-            assert.equal(messageSplitArray[8], message+test[0]);
+            assert.equal(messageSplitArray[7], message+test[0]);
             doneWait();
           });
 
           socket2.on("message", function (msg) {
             let messageSplitArray = msg.toString().split(' ');
             assert.equal(messageSplitArray[0], '<' + (facility*8+test[1]) + '>1');
-            assert.equal(messageSplitArray[7], context);
-            assert.equal(messageSplitArray[8], message+test[0]);
+            assert.equal(messageSplitArray[7], message+test[0]);
             doneWait();
           });
 
@@ -208,7 +204,8 @@ describe('Highlogger', function () {
             severityMin: 'emerg',
             severityMax: 'emerg',
             address: '127.0.0.1',
-            method: 'udp4'
+            method: 'udp4',
+            useContext: true
           },
           {
             type: 'socket',
@@ -216,7 +213,8 @@ describe('Highlogger', function () {
             severityMin: 'info',
             severityMax: 'info',
             address: '127.0.0.1',
-            method: 'udp4'
+            method: 'udp4',
+            useContext: true
           }
             ]),
             doneCount = 0;
@@ -266,7 +264,7 @@ describe('Highlogger', function () {
       });
 
       it('should wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true, useContext: true}]),
             message = 'foobar';
 
         highLogger.getContext = function () {
@@ -283,7 +281,7 @@ describe('Highlogger', function () {
       });
 
       it('should not wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false}]),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false, useContext: true}]),
             message = 'foobar';
 
         highLogger.getContext = function () {
@@ -319,8 +317,8 @@ describe('Highlogger', function () {
           return 'bar';
         };
 
-        assert.equal(typeof highLogger.getDebug(), 'function');
-        assert.equal(highLogger.getDebug().name, 'emptyDebug');
+        assert.equal(typeof highLogger.getDebug, 'function');
+        assert.equal(highLogger.getDebug.name, 'getDebug');
         assert.equal(highLogger.getDebug("foobar").name, 'emptyDebug');
         assert.equal(typeof highLogger.getDebug('foo'), 'function');
         assert.equal(highLogger2.getDebug('foo').name, 'emptyDebug');
@@ -368,7 +366,7 @@ describe('Highlogger', function () {
         });
 
         socket.bind(null, function () {
-          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec'}]),
+          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec', useContext: true}]),
               debugFn = highLogger.getDebug(debugKey);
 
           debugFn('message');

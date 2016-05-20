@@ -36,4 +36,41 @@ describe('debug', function () {
 
     process.env.DEBUG = debugEnv;
   });
+
+  describe('isIncluded', function () {
+
+    it('should return false on non included', function () {
+      let debug = new Debug();
+
+      assert.equal(debug.isIncluded('foobar'), false);
+    });
+
+  });
+
+  describe('isExcluded', function () {
+
+    it('should return false on non excluded', function () {
+      let debug = new Debug();
+
+      assert.equal(debug.isExcluded('foobar'), false);
+    });
+
+  });
+
+  describe('isDebug', function () {
+
+    it('should return false on non debug', function () {
+      let debug = new Debug();
+
+      assert.equal(debug.isDebug('foobar'), false);
+    });
+
+    it('should return false on non string debug', function () {
+      let debug = new Debug();
+
+      //noinspection JSCheckFunctionSignatures
+      assert.equal(debug.isDebug(true), false);
+    });
+
+  });
 });

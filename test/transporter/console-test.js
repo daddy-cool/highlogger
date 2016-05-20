@@ -37,6 +37,43 @@ describe('transporter console', function () {
 
   describe('log', function () {
 
+    it('should log without context', function (done) {
+      let consoleTransporter = new Console({colors: false, prependContext: false}),
+          stdOut = process.stdout.write,
+          stdErr = process.stderr.write,
+          doneCount = 0,
+          isDone = function () {
+            if (doneCount++ >= 1) {
+              return done();
+            }
+          };
+
+      process.stdout.write = function (message) {
+        if (message === 'logWithoutContext\n') {
+          assert.equal(message, 'logWithoutContext\n');
+          isDone();
+        } else {
+          stdOut.apply(this, arguments);
+        }
+      };
+
+      process.stderr.write = function (message) {
+        if (message === 'logWithoutContext\n') {
+          assert.equal(message, 'logWithoutContext\n');
+          isDone();
+        } else {
+          stdErr.apply(this, arguments);
+        }
+      };
+
+      consoleTransporter.log('logWithoutContext', 5, 'foo', function () {
+        process.stdout.write = stdOut;
+      });
+      consoleTransporter.log('logWithoutContext', 0, 'bar', function () {
+        process.stderr.write = stdErr;
+      });
+    });
+
     it('should log without color', function (done) {
       let consoleTransporter = new Console({colors: false, prependContext: true}),
           stdOut = process.stdout.write,

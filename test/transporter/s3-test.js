@@ -13,6 +13,13 @@ AWS.mock('S3', 'headBucket', function (params, callback) {
   callback();
 });
 
+AWS.mock('S3', 'upload', function (params, callback) {
+  if (params.Body !== 'foobar') {
+    return callback({code: 'wrong body'});
+  }
+  callback(null, {Location: 'foobarLocation'});
+});
+
 defaultS3 = new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar'});
 
 describe('transporter s3', function () {
@@ -87,19 +94,19 @@ describe('transporter s3', function () {
 
     });
 
-    describe('locationPrefix', function () {
+    describe('fallbackPrefix', function () {
 
       it('should set default value', function () {
-        assert.equal(defaultS3.locationPrefix, '');
+        assert.equal(defaultS3.fallbackPrefix, '');
       });
 
       it('should set custom value', function () {
-        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', locationPrefix: 'locationFoobar', bucket: 'foobar'}).locationPrefix, 'locationFoobar');
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', fallbackPrefix: 'fallbackFoobar', bucket: 'foobar'}).fallbackPrefix, 'fallbackFoobar');
       });
 
       it('should throw on invalid value', function () {
         assert.throws(function () {
-          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', locationPrefix: true, bucket: 'foobar'});
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', fallbackPrefix: true, bucket: 'foobar'});
         }, null, null);
       });
 
@@ -194,6 +201,22 @@ describe('transporter s3', function () {
   });
 
   describe('write', function () {
+
+    it('should..', function (done) {
+      defaultS3.write('foo', 'bar', 0, function (fallbackErr, fallbackMsg) {
+        assert.equal(fallbackErr, null);
+        assert.equal(fallbackMsg, 'wrong body');
+        done();
+      });
+    });
+
+    it('should.. 2', function (done) {
+      defaultS3.write('foobar', 'bar', 0, function (fallbackErr, fallbackMsg) {
+        assert.equal(fallbackErr, null);
+        assert.equal(fallbackMsg, 'foobarLocation');
+        done();
+      });
+    });
 
   });
 

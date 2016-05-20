@@ -38,7 +38,7 @@ describe('transporter console', function () {
   describe('log', function () {
 
     it('should log without context', function (done) {
-      let consoleTransporter = new Console({colors: false, prependContext: false}),
+      let consoleTransporter = new Console({colors: false, useContext: false}),
           stdOut = process.stdout.write,
           stdErr = process.stderr.write,
           doneCount = 0,
@@ -75,7 +75,7 @@ describe('transporter console', function () {
     });
 
     it('should log without color', function (done) {
-      let consoleTransporter = new Console({colors: false, prependContext: true}),
+      let consoleTransporter = new Console({colors: false, useContext: true}),
           stdOut = process.stdout.write,
           stdErr = process.stderr.write,
           doneCount = 0,
@@ -112,7 +112,7 @@ describe('transporter console', function () {
     });
 
     it('should log with color', function (done) {
-      let consoleTransporter = new Console({colors: true, prependContext: true}),
+      let consoleTransporter = new Console({colors: true, useContext: true}),
           stdOut = process.stdout.write,
           testChalk = new chalk.constructor({enabled: true}),
           tests = [

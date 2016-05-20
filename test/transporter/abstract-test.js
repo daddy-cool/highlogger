@@ -61,20 +61,20 @@ describe('transporter abstract', function () {
 
     });
 
-    describe('prependContext', function () {
+    describe('useContext', function () {
 
-      it('should set default prependContext', function () {
-        assert.equal(defaultAbstract.prependContext, false);
+      it('should set default useContext', function () {
+        assert.equal(defaultAbstract.useContext, false);
       });
 
-      it('should set custom prependContext', function () {
-        let abstract = new Abstract({prependContext: true});
-        assert.equal(abstract.prependContext, true);
+      it('should set custom useContext', function () {
+        let abstract = new Abstract({useContext: true});
+        assert.equal(abstract.useContext, true);
       });
 
-      it('should throw on invalid prependContext', function () {
+      it('should throw on invalid useContext', function () {
         assert.throws(function () {
-          new Abstract({prependContext: 'foo'});
+          new Abstract({useContext: 'foo'});
         }, null, null);
       });
 
@@ -148,7 +148,7 @@ describe('transporter abstract', function () {
 
     it('should call write and fallback', function (done) {
       let fallbackTransporter = new Abstract({}),
-          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, prependContext: true});
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, useContext: true});
 
       fallbackTransporter.write = function (message, context, severity, callback) {
         assert.equal(message, 'foo');
@@ -162,8 +162,8 @@ describe('transporter abstract', function () {
     });
 
     it('should call write and fallback & JSON', function (done) {
-      let fallbackTransporter = new Abstract({prependContext: true}),
-          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true, prependContext: true});
+      let fallbackTransporter = new Abstract({useContext: true}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, json: true, useContext: true});
 
       fallbackTransporter.write = function (message, context, severity, callback) {
         assert.equal(message, 'bar foo');
@@ -177,8 +177,8 @@ describe('transporter abstract', function () {
     });
 
     it('should call write and fallback with fallbackMessage', function (done) {
-      let fallbackTransporter = new Abstract({prependContext: true}),
-          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, prependContext: true});
+      let fallbackTransporter = new Abstract({useContext: true}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter, useContext: true});
 
       fallbackTransporter.write = function (message, context, severity, callback) {
         assert.equal(message, 'bar foo');

@@ -206,6 +206,26 @@ describe('transporter abstract', function () {
       abstractTransporter.log('foo', 0, 'bar', done);
     });
 
+    it('should call write and fallback and fallback again', function (done) {
+      let fallbackTransporter0 = new Abstract({}),
+          fallbackTransporter1 = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter0}),
+          abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter1, json: true});
+
+      fallbackTransporter1.write = function (message, context, severity, callback) {
+        assert.equal(message, 'message exceeded sizeLimit, foobar');
+        callback(null, "foobar");
+      };
+      fallbackTransporter0.write = function (message, context, severity, callback) {
+        assert.equal(message, 'foo');
+        callback(null, "foobar");
+      };
+      abstractTransporter.write = function (message, context, severity, callback) {
+        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit', fallback: 'foobar'});
+        callback();
+      };
+      abstractTransporter.log('foo', 0, 'bar', done);
+    });
+
   });
 
   it('should throw on write', function () {

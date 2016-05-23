@@ -12,14 +12,6 @@ AWS.mock('S3', 'headBucket', function (params, callback) {
   }
   callback();
 });
-
-AWS.mock('S3', 'upload', function (params, callback) {
-  if (params.Body !== 'foobar') {
-    return callback({code: 'wrong body'});
-  }
-  callback(null, {Location: 'foobarLocation'});
-});
-
 defaultS3 = new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar'});
 
 describe('transporter s3', function () {
@@ -202,20 +194,49 @@ describe('transporter s3', function () {
 
   describe('write', function () {
 
-    it('should..', function (done) {
-      defaultS3.write('foo', 'bar', 0, function (fallbackErr, fallbackMsg) {
-        assert.equal(fallbackErr, null);
-        assert.equal(fallbackMsg, 'wrong body');
-        done();
+    it('should pass through error as fallbackMsg', function (done) {
+      AWS.mock('S3', 'upload', function (params, callback) {
+        AWS.restore('S3', 'upload');
+        assert.equal(params.Body, 'foo');
+        callback({code: 'wrong body'});
       });
+
+      new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar'})
+        .write('foo', 'bar', 0, function (fallbackErr, fallbackMsg) {
+          assert.equal(fallbackErr, null);
+          assert.equal(fallbackMsg, 'wrong body');
+          done();
+        });
     });
 
-    it('should.. 2', function (done) {
-      defaultS3.write('foobar', 'bar', 0, function (fallbackErr, fallbackMsg) {
-        assert.equal(fallbackErr, null);
-        assert.equal(fallbackMsg, 'foobarLocation');
-        done();
+    it('should pass through location as fallbackMsg', function (done) {
+      AWS.mock('S3', 'upload', function (params, callback) {
+        AWS.restore('S3', 'upload');
+        assert.equal(params.Body, 'foobar1');
+        callback(null, {Location: 'foobarLocation'});
       });
+
+      new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar'})
+        .write('foobar1', 'bar', 0, function (fallbackErr, fallbackMsg) {
+          assert.equal(fallbackErr, null);
+          assert.equal(fallbackMsg, 'foobarLocation');
+          done();
+        });
+    });
+
+    it('should prepend context to key', function (done) {
+      AWS.mock('S3', 'upload', function (params, callback) {
+        AWS.restore('S3', 'upload');
+        assert.equal(params.Key.split('_')[0], 'bar');
+        assert.equal(params.Body, 'foobar2');
+        callback(null, {Location: 'foobarLocation'});
+      });
+      new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar', useContext: true})
+        .write('foobar2', 'bar', 0, function (fallbackErr, fallbackMsg) {
+          assert.equal(fallbackErr, null);
+          assert.equal(fallbackMsg, 'foobarLocation');
+          done();
+        });
     });
 
   });

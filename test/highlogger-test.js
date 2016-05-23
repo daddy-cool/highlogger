@@ -60,9 +60,9 @@ describe('Highlogger', function () {
         ]);
 
         assert.equal(highLogger.transporters.transporterList.length, 3);
-        assert.ok(highLogger.transporters.transporterList[2] instanceof SocketTransporter);
+        assert.ok(highLogger.transporters.transporterList[0] instanceof SocketTransporter);
         assert.ok(highLogger.transporters.transporterList[1] instanceof SyslogTransporter);
-        assert.ok(highLogger.transporters.transporterList[0] instanceof ConsoleTransporter);
+        assert.ok(highLogger.transporters.transporterList[2] instanceof ConsoleTransporter);
       });
 
       it('should skip invalid transporter config', function () {

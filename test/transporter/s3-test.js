@@ -4,6 +4,8 @@ let Abstract = require('../../lib/transporters/abstract'),
     assert = require('assert'),
     AWS = require('aws-sdk-mock'),
     S3 = require('../../lib/transporters/s3'),
+    fs = require('fs'),
+    path = require('path'),
     defaultS3;
 
 AWS.mock('S3', 'headBucket', function (params, callback) {
@@ -63,6 +65,42 @@ describe('transporter s3', function () {
       it('should throw on invalid value', function () {
         assert.throws(function () {
           new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', ssl: 'foobar', bucket: 'foobar'});
+        }, null, null);
+      });
+
+    });
+
+    describe('appName', function () {
+
+      it('should set default appName (without package.json)', function () {
+        assert.equal(defaultS3.appName, null);
+      });
+
+      it('should set default appName (with package.json)', function (done) {
+        let appDir = path.dirname(require.main.filename),
+            packageJson = path.join(appDir, 'package.json');
+
+        fs.writeFile(packageJson, '{"name":"foo/bar"}', function () {
+          try {
+            assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar'}).appName, require(packageJson).name.split('/').pop());
+          } catch (e) {
+            assert.ifError(e);
+          }
+
+          delete require.cache[require.resolve(packageJson)];
+
+          fs.unlink(packageJson, done);
+        });
+
+      });
+
+      it('should set custom appName', function () {
+        assert.equal(new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar', appName: 'foobar'}).appName, 'foobar');
+      });
+
+      it('should throw on invalid appName', function () {
+        assert.throws(function () {
+          new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar', appName: true});
         }, null, null);
       });
 
@@ -227,11 +265,11 @@ describe('transporter s3', function () {
     it('should prepend context to key', function (done) {
       AWS.mock('S3', 'upload', function (params, callback) {
         AWS.restore('S3', 'upload');
-        assert.equal(params.Key.split('_')[0], 'bar');
+        assert.equal(params.Key.split('_')[0], 'appName/bar');
         assert.equal(params.Body, 'foobar2');
         callback(null, {Location: 'foobarLocation'});
       });
-      new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar', useContext: true})
+      new S3({accessKeyId: 'foo', secretAccessKey: 'bar', region: 'foobar', bucket: 'foobar', useContext: true, appName: 'appName'})
         .write('foobar2', 'bar', 0, function (fallbackErr, fallbackMsg) {
           assert.equal(fallbackErr, null);
           assert.equal(fallbackMsg, 'foobarLocation');

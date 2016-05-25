@@ -72,6 +72,8 @@ describe('transporter syslog', function () {
           } catch (e) {
             assert.ifError(e);
           }
+
+          delete require.cache[require.resolve(packageJson)];
           fs.unlink(packageJson, done);
         });
       });

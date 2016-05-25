@@ -212,15 +212,15 @@ describe('transporter abstract', function () {
           abstractTransporter = new Abstract({sizeLimit: 1, fallbackTransporter: fallbackTransporter1, json: true});
 
       fallbackTransporter1.write = function (message, context, severity, callback) {
-        assert.equal(message, 'message exceeded sizeLimit, foobar');
-        callback(null, "foobar");
+        assert.equal(message, 'message exceeded sizeLimit, foobar1');
+        callback(null, "foobar0");
       };
       fallbackTransporter0.write = function (message, context, severity, callback) {
         assert.equal(message, 'foo');
-        callback(null, "foobar");
+        callback(null, "foobar1");
       };
       abstractTransporter.write = function (message, context, severity, callback) {
-        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit', fallback: 'foobar'});
+        assert.deepEqual(JSON.parse(message), {message: 'message exceeded sizeLimit', fallback: 'foobar0'});
         callback();
       };
       abstractTransporter.log('foo', 0, 'bar', done);

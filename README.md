@@ -312,6 +312,12 @@ The region where the bucket is located. Possible values include:
 * `ap-southeast-2`
 * `sa-east-1`
 
+#### appName
+__type:__ string<br/>
+__default:__ value of `name` set in your `package.json`
+
+Will be prepended to the key with a slash like `appName/context-UUID`
+
 #### sessionToken
 __type:__ string
 

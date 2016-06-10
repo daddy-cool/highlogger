@@ -92,6 +92,24 @@ describe('Highlogger', function () {
     });
   });
 
+  describe('reload', function () {
+    it('should reload transporters', function () {
+      let highLogger = new Highlogger([
+        {type: 'console'},
+        {type: 'syslog'},
+        {type: 'socket', port: 0, address: '127.0.0.1', method: 'udp4'}
+      ]);
+      assert.equal(highLogger.transporters.transporterList.length, 3);
+      assert.ok(highLogger.transporters.transporterList[0] instanceof SocketTransporter);
+      assert.ok(highLogger.transporters.transporterList[1] instanceof SyslogTransporter);
+      assert.ok(highLogger.transporters.transporterList[2] instanceof ConsoleTransporter);
+
+      highLogger.reload([{type: 'syslog'}]);
+      assert.equal(highLogger.transporters.transporterList.length, 1);
+      assert.ok(highLogger.transporters.transporterList[0] instanceof SyslogTransporter);
+    });
+  });
+
   describe('log', function () {
 
     describe('severity types', function () {

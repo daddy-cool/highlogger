@@ -367,6 +367,9 @@ let log = Highlogger.getInstance();
 log.notice('this is a error message');
 ```
 
+## Reload
+You can call `reload(config)` on an Highlogger instance to have that instance reload (and replace) it's transporters.
+
 ## Usage
 Highlogger instances offer logging methods for each supported severity,<br />
 as well as 'getter' methods that allows you to overwrite the message context.

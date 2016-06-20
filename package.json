@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "fast, minimalist logging module",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "license": "MIT",
   "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [

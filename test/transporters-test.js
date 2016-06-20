@@ -5,13 +5,6 @@ let assert = require('assert'),
     Transporters = require('../lib/transporters');
 
 describe('transporters', function () {
-
-  it('should throw on invalid config', function () {
-    assert.throws(function () {
-      new Transporters({});
-    }, null, null);
-  });
-
   it('should set fallback', function () {
     let transporters = new Transporters([{type: 'console', fallback: {type: 'console'}}]);
     assert.equal(transporters.transporterList.length, 1);

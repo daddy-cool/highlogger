@@ -14,19 +14,20 @@ process.env.SUPPRESS_NO_CONFIG_WARNING = true;
 describe('Highlogger', function () {
 
   describe('getInstance', function () {
-    it('should throw an error if used before instancing', function () {
-      delete require.cache;
-      assert.throws(Highlogger.getInstance, null, null);
-    });
-
-    it('should return an instance if instanced at least once', function () {
-      delete require.cache;
-      new Highlogger();
+    it('should return a new instance if not instanced before', function () {
+      delete Highlogger._instance;
       assert.ok(Highlogger.getInstance() instanceof Highlogger);
     });
 
+    it('should return the same instance if instanced at least once', function () {
+      let hl0 = new Highlogger([{type: 'syslog'}]);
+      assert.equal(require('../lib/highlogger').getInstance(), hl0);
+      delete Highlogger._instance;
+      assert.notEqual(require('../lib/highlogger').getInstance(), hl0);
+    });
+
     it('should return the last instance', function () {
-      delete require.cache;
+      delete Highlogger._instance;
       let hl1 = new Highlogger(),
           hl2;
 
@@ -66,28 +67,10 @@ describe('Highlogger', function () {
       });
 
       it('should skip invalid transporter config', function () {
-        let error0 = false,
-            error1 = false;
-        try {
-          new Highlogger([1, 2]);
-        } catch (e) {
-          error0 = true;
-        }
+        let hl = new Highlogger([1, 2, {type: 'syslog'}]);
 
-        try {
-          new Highlogger([1, 2, {type: 'console'}]);
-        } catch (e) {
-          error1 = true;
-        }
-
-        assert.ok(error0);
-        assert.ok(error1);
-      });
-
-      it('should call errorHandler on unsupported transporterType', function () {
-        assert.throws(function invalidTransporter () {
-          new Highlogger([{type: -1}]);
-        }, null, null);
+        assert.equal(hl.transporters.transporterList.length, 1);
+        assert.ok(hl.transporters.transporterList[0] instanceof SyslogTransporter);
       });
     });
   });

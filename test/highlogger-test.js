@@ -1,31 +1,33 @@
 'use strict';
 
 let Highlogger = require('../lib/highlogger'),
-    ConsoleTransporter = require('../lib/transporter/console'),
-    SocketTransporter = require('../lib/transporter/socket'),
-    SyslogTransporter = require('../lib/transporter/syslog'),
+    ConsoleTransporter = require('../lib/transporters/console'),
+    SocketTransporter = require('../lib/transporters/socket'),
+    SyslogTransporter = require('../lib/transporters/syslog'),
     assert = require('assert'),
     async = require('async'),
-    dgram = require('dgram');
+    dgram = require('dgram'),
+    constants = require('../lib/helpers/constants');
 
-const SHARED_CONSTANTS = require('../lib/shared-constants');
+process.env.SUPPRESS_NO_CONFIG_WARNING = true;
 
 describe('Highlogger', function () {
 
   describe('getInstance', function () {
-    it('should throw an error if used before instancing', function () {
-      delete require.cache;
-      assert.throws(Highlogger.getInstance, "should throw error");
-    });
-
-    it('should return an instance if instanced at least once', function () {
-      delete require.cache;
-      new Highlogger();
+    it('should return a new instance if not instanced before', function () {
+      delete Highlogger._instance;
       assert.ok(Highlogger.getInstance() instanceof Highlogger);
     });
 
+    it('should return the same instance if instanced at least once', function () {
+      let hl0 = new Highlogger([{type: 'syslog'}]);
+      assert.equal(require('../lib/highlogger').getInstance(), hl0);
+      delete Highlogger._instance;
+      assert.notEqual(require('../lib/highlogger').getInstance(), hl0);
+    });
+
     it('should return the last instance', function () {
-      delete require.cache;
+      delete Highlogger._instance;
       let hl1 = new Highlogger(),
           hl2;
 
@@ -37,12 +39,18 @@ describe('Highlogger', function () {
     });
   });
 
+  describe('getContext', function () {
+    it('should return the function caller filename', function () {
+      assert.equal(new Highlogger().getContext().split('/').pop(), 'runnable.js');
+    });
+  });
+
   describe('init', function () {
     describe('transporter', function () {
       it('should set a default transporter', function () {
         let highLogger = new Highlogger();
-        assert.equal(highLogger.transporters.length, 1);
-        assert.ok(highLogger.transporters[0] instanceof ConsoleTransporter);
+        assert.equal(highLogger.transporters.transporterList.length, 1);
+        assert.ok(highLogger.transporters.transporterList[0] instanceof ConsoleTransporter);
       });
 
       it('should set a custom transporters', function () {
@@ -52,69 +60,45 @@ describe('Highlogger', function () {
           {type: 'socket', port: 0, address: '127.0.0.1', method: 'udp4'}
         ]);
 
-        assert.equal(highLogger.transporters.length, 3);
-        assert.ok(highLogger.transporters[0] instanceof SocketTransporter);
-        assert.ok(highLogger.transporters[1] instanceof SyslogTransporter);
-        assert.ok(highLogger.transporters[2] instanceof ConsoleTransporter);
+        assert.equal(highLogger.transporters.transporterList.length, 3);
+        assert.ok(highLogger.transporters.transporterList[0] instanceof SocketTransporter);
+        assert.ok(highLogger.transporters.transporterList[1] instanceof SyslogTransporter);
+        assert.ok(highLogger.transporters.transporterList[2] instanceof ConsoleTransporter);
       });
 
       it('should skip invalid transporter config', function () {
-        let highLogger = new Highlogger([1, 2]),
-            highLogger2 = new Highlogger([1, 2, {type: 'console'}]);
+        let hl = new Highlogger([1, 2, {type: 'syslog'}]);
 
-        assert.equal(highLogger.transporters.length, 0);
-        assert.equal(highLogger2.transporters.length, 1);
-      });
-
-      it('should call errorHandler on unsupported transporterType', function () {
-        function invalidTransporter () {
-          new Highlogger([{type: -1}]);
-        }
-
-        assert.throws(invalidTransporter);
-      });
-    });
-
-    describe('debugKeys', function () {
-      it('should set default debugKeys', function () {
-        let highLogger = new Highlogger();
-        assert.deepEqual(highLogger.debugKeys.include, []);
-        assert.deepEqual(highLogger.debugKeys.exclude, []);
-      });
-
-      it('should not set invalid debugKeys', function () {
-        let debug = process.env.DEBUG,
-            highLogger, highLogger2, highLogger3, highLogger4;
-
-        process.env.DEBUG = '';
-        highLogger = new Highlogger();
-
-        delete process.env.DEBUG;
-        highLogger2 = new Highlogger();
-
-        process.env.DEBUG = 'a, c, -b, -d';
-        highLogger3 = new Highlogger();
-
-        process.env.DEBUG = '*,   ';
-        highLogger4 = new Highlogger();
-
-        assert.deepEqual(highLogger.debugKeys.include, []);
-        assert.deepEqual(highLogger.debugKeys.exclude, []);
-        assert.deepEqual(highLogger2.debugKeys.include, []);
-        assert.deepEqual(highLogger2.debugKeys.exclude, []);
-        assert.deepEqual(highLogger3.debugKeys.include, [new RegExp('^c$'), new RegExp('^a$')]);
-        assert.deepEqual(highLogger3.debugKeys.exclude, [new RegExp('^d$'), new RegExp('^b$')]);
-        assert.deepEqual(highLogger4.debugKeys.include, [/^.*?$/]);
-        assert.deepEqual(highLogger4.debugKeys.exclude, []);
-
-        process.env.DEBUG = debug;
+        assert.equal(hl.transporters.transporterList.length, 1);
+        assert.ok(hl.transporters.transporterList[0] instanceof SyslogTransporter);
       });
     });
   });
 
+  describe('reload', function () {
+    it('should reload transporters', function () {
+      let highLogger = new Highlogger([
+        {type: 'console'},
+        {type: 'syslog'},
+        {type: 'socket', port: 0, address: '127.0.0.1', method: 'udp4'}
+      ]);
+      assert.equal(highLogger.transporters.transporterList.length, 3);
+      assert.ok(highLogger.transporters.transporterList[0] instanceof SocketTransporter);
+      assert.ok(highLogger.transporters.transporterList[1] instanceof SyslogTransporter);
+      assert.ok(highLogger.transporters.transporterList[2] instanceof ConsoleTransporter);
+
+      highLogger.reload([{type: 'syslog'}]);
+      assert.equal(highLogger.transporters.transporterList.length, 1);
+      assert.ok(highLogger.transporters.transporterList[0] instanceof SyslogTransporter);
+    });
+  });
+
   describe('log', function () {
+
     describe('severity types', function () {
       let facilityName = 'sec',
+          debug,
+          context = 'foobarContext',
           facility = 10,
           port,
           port2,
@@ -128,10 +112,13 @@ describe('Highlogger', function () {
             ['error', 3],
             ['warn', 4],
             ['notice', 5],
-            ['info', 6]
+            ['info', 6],
+            ['debug', 7]
           ];
 
       beforeEach(function (done) {
+        debug = process.env.DEBUG;
+        process.env.DEBUG='*';
         async.parallel([
           function (cb) {
             socket = dgram.createSocket('udp4');
@@ -161,6 +148,7 @@ describe('Highlogger', function () {
       });
 
       afterEach(function (done) {
+        process.env.DEBUG = debug;
         async.parallel([
           function (cb) {
             socket.close(cb);
@@ -173,11 +161,16 @@ describe('Highlogger', function () {
 
       tests.forEach(function (test) {
         it('should log ' + test[0], function (done) {
+
           let highLogger = new Highlogger([
                 {type: 'syslog', port: port, facility: facilityName},
                 {type: 'syslog', port: port2, facility: facilityName}
               ]),
               doneCount = 0;
+
+          highLogger.getContext = function () {
+            return context;
+          };
 
           function doneWait () {
             doneCount++;
@@ -206,26 +199,24 @@ describe('Highlogger', function () {
 
       it('should only log on transporters with matching severity range', function (done) {
         let highLogger = new Highlogger([
-            {
-              type: 'socket',
-              port: port,
-              severity: {
-                minimum: 'emerg',
-                maximum: 'emerg'
-              },
-              address: '127.0.0.1',
-              method: 'udp4'
-            },
-            {
-              type: 'socket',
-              port: port2,
-              severity: {
-                minimum: 'info',
-                maximum: 'info'
-              },
-              address: '127.0.0.1',
-              method: 'udp4'
-            }
+          {
+            type: 'socket',
+            port: port,
+            severityMin: 'emerg',
+            severityMax: 'emerg',
+            address: '127.0.0.1',
+            method: 'udp4',
+            useContext: true
+          },
+          {
+            type: 'socket',
+            port: port2,
+            severityMin: 'info',
+            severityMax: 'info',
+            address: '127.0.0.1',
+            method: 'udp4',
+            useContext: true
+          }
             ]),
             doneCount = 0;
 
@@ -237,22 +228,23 @@ describe('Highlogger', function () {
         }
 
         socket.on("message", function (msg) {
-          assert.equal(msg.toString(), message+'emerg');
+          assert.equal(msg.toString(), 'bar ' + message+'emerg');
           doneWait();
         });
 
         socket2.on("message", function (msg) {
-          assert.equal(msg.toString(), message+'info');
+          assert.equal(msg.toString(), 'bar ' + message+'info');
           doneWait();
         });
 
-        highLogger.emerg(message+'emerg');
-        highLogger.info(message+'info');
+        highLogger.getEmerg("bar")(message + 'emerg');
+        highLogger.getInfo("bar")(message + 'info');
       });
     });
 
     describe('json', function () {
       let port,
+          context = 'foobarContext',
           socket;
 
       beforeEach(function (done) {
@@ -273,12 +265,16 @@ describe('Highlogger', function () {
       });
 
       it('should wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true, useContext: true}]),
             message = 'foobar';
+
+        highLogger.getContext = function () {
+          return context;
+        };
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], '{"0":"' + message + '"}');
+          assert.equal(messageSplitArray[7], JSON.stringify({message:message, context: context}));
           done();
         });
 
@@ -286,25 +282,17 @@ describe('Highlogger', function () {
       });
 
       it('should not wrap message inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false}]),
+        let highLogger = new Highlogger([{type: 'syslog', port: port, json: false, useContext: true}]),
             message = 'foobar';
 
-        socket.on("message", function (msg) {
-          let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], message);
-          done();
-        });
-
-        highLogger.info(message);
-      });
-
-      it('should not wrap stringified objects inside curly braces', function (done) {
-        let highLogger = new Highlogger([{type: 'syslog', port: port, json: true}]),
-            message = {foobar: 'foobar'};
+        highLogger.getContext = function () {
+          return context;
+        };
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[7], JSON.stringify(message));
+          assert.equal(messageSplitArray[7], context);
+          assert.equal(messageSplitArray[8], message);
           done();
         });
 
@@ -314,29 +302,41 @@ describe('Highlogger', function () {
 
     describe('getDebug', function () {
 
-      it('should return notIncludedDebug if debugKey is not included', function () {
+      it('should return emptyDebug if debugKey is not included', function () {
         let debug = process.env.DEBUG,
             highLogger = new Highlogger(),
             highLogger2;
 
+        highLogger.getContext = function () {
+          return 'foo';
+        };
+
         process.env.DEBUG = 'bar';
         highLogger2 = new Highlogger();
 
-        assert.equal(highLogger.getDebug().name, 'missingDebugKey');
-        assert.equal(highLogger2.getDebug('foo').name, 'notIncludedDebug');
+        highLogger2.getContext = function () {
+          return 'bar';
+        };
+
+        assert.equal(typeof highLogger.getDebug, 'function');
+        assert.equal(highLogger.getDebug.name, 'getDebug');
+        assert.equal(highLogger.getDebug("foobar").name, 'emptyDebug');
+        assert.equal(typeof highLogger.getDebug('foo'), 'function');
+        assert.equal(highLogger2.getDebug('foo').name, 'emptyDebug');
 
         process.env.DEBUG = debug;
       });
 
-      it('should return excludedDebug if debugKey is excluded', function () {
+      it('should return emptyDebug if debugKey is excluded', function () {
         let debug = process.env.DEBUG,
             highLogger;
 
         process.env.DEBUG = '*, -foo*';
         highLogger = new Highlogger();
 
-        assert.equal(highLogger.getDebug('foo').name, 'excludedDebug');
-
+        assert.equal(typeof highLogger.getDebug('foo'), 'function');
+        assert.equal(highLogger.getDebug('foo').name, 'emptyDebug');
+        assert.equal(highLogger.getDebug('foo')(), undefined);
         process.env.DEBUG = debug;
       });
 
@@ -347,8 +347,10 @@ describe('Highlogger', function () {
         process.env.DEBUG = '*bar*, -*foo*';
         highLogger = new Highlogger();
 
-        assert.equal(highLogger.getDebug('ffffbar').name, 'debug');
-        assert.equal(highLogger.getDebug('barfoobar').name, 'excludedDebug');
+        assert.equal(typeof highLogger.getDebug('ffffbar'), 'function');
+        assert.equal(highLogger.getDebug('ffffbar').name, 'debugWithContext');
+        assert.equal(typeof highLogger.getDebug('barfoobar'), 'function');
+        assert.equal(highLogger.getDebug('barfoobar').name, 'emptyDebug');
 
         process.env.DEBUG = debug;
       });
@@ -365,7 +367,7 @@ describe('Highlogger', function () {
         });
 
         socket.bind(null, function () {
-          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec'}]),
+          let highLogger =  new Highlogger([{type: 'syslog', port: socket.address().port, facility: 'sec', useContext: true}]),
               debugFn = highLogger.getDebug(debugKey);
 
           debugFn('message');
@@ -373,8 +375,8 @@ describe('Highlogger', function () {
 
         socket.on("message", function (msg) {
           let messageSplitArray = msg.toString().split(' ');
-          assert.equal(messageSplitArray[5], debugKey);
-          assert.equal(messageSplitArray[0], '<' + (10*8+SHARED_CONSTANTS.SEVERITY.debug) + '>1');
+          assert.equal(messageSplitArray[7], debugKey);
+          assert.equal(messageSplitArray[0], '<' + (10*8+constants.SEVERITY.debug) + '>1');
 
           process.env.DEBUG = debug;
           socket.close(done);

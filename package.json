@@ -1,7 +1,7 @@
 {
   "name": "highlogger",
   "description": "no longer maintained, switch to bunyan instead",
-  "version": "3.5.2",
+  "version": "3.5.3",
   "license": "MIT",
   "author": "Metin Kul <metinkul@outlook.com>",
   "contributors": [

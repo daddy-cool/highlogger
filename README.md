@@ -1,6 +1,6 @@
 # highlogger
 
-With the recent changes to [bunyan](https://www.npmjs.com/package/bunyan) there is no more need for highlogger so I recommend switching since highloggerer will not be maintained anymore.
+With the recent changes to [bunyan](https://www.npmjs.com/package/bunyan) there is no more need for highlogger so I recommend switching since highloggerer will not be maintained anymore. For syslog you can add [bunyan-syslog-udp](https://www.npmjs.com/package/bunyan-syslog-udp) which hasn't been updated for two years but worked without an issue for me so far.
 
 [![npm](https://img.shields.io/npm/v/highlogger.svg)](https://www.npmjs.com/package/highlogger)
 [![Build Status](https://travis-ci.org/daddy-cool/highlogger.svg?branch=master)](https://travis-ci.org/daddy-cool/highlogger)
